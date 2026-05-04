@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install *)",
+      "PowerShell($pnpm = \"C:\\\\Users\\\\YVES SORHO\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\"; Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue; & $pnpm store path 2>&1)",
+      "PowerShell(Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; $next = Test-Path \"node_modules\\\\next\"; $react = Test-Path \"node_modules\\\\react\"; $ts = Test-Path \"node_modules\\\\typescript\"; Write-Output \"next: $next | react: $react | typescript: $ts\"; \\(Get-ChildItem node_modules -Directory | Measure-Object\\).Count)",
+      "PowerShell(Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; $node = \"C:\\\\Program Files\\\\nodejs\\\\node.exe\"; $pnpm = \"C:\\\\Users\\\\YVES SORHO\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\"; & $node node_modules\\\\next\\\\dist\\\\bin\\\\next --version 2>&1)",
+      "PowerShell($pnpm = \"C:\\\\Users\\\\YVES SORHO\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\"; Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; & $pnpm typecheck 2>&1)",
+      "PowerShell($pnpm = \"C:\\\\Users\\\\YVES SORHO\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\"; Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; & $pnpm lint 2>&1)"
+    ]
+  }
+}

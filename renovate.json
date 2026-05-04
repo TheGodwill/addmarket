@@ -1,0 +1,50 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "timezone": "Europe/Paris",
+  "schedule": ["before 6am on monday"],
+  "dependencyDashboard": true,
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "chore(deps):",
+  "prCreation": "immediate",
+  "packageRules": [
+    {
+      "description": "Auto-merge safe patch updates",
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true,
+      "automergeType": "pr",
+      "requiredStatusChecks": ["CI / Build"]
+    },
+    {
+      "description": "Auto-merge minor updates for non-zero major packages",
+      "matchUpdateTypes": ["minor"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true,
+      "automergeType": "pr",
+      "requiredStatusChecks": ["CI / Build"]
+    },
+    {
+      "description": "Major updates require manual review",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["major-update", "needs-review"]
+    },
+    {
+      "description": "Group all Next.js related packages",
+      "matchPackagePatterns": ["^next", "^@next/"],
+      "groupName": "Next.js",
+      "automerge": false
+    },
+    {
+      "description": "Group Supabase packages",
+      "matchPackagePatterns": ["^@supabase/"],
+      "groupName": "Supabase"
+    },
+    {
+      "description": "Group testing packages",
+      "matchPackagePatterns": ["vitest", "playwright", "@testing-library"],
+      "groupName": "Testing"
+    }
+  ]
+}

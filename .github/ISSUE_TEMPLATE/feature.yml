@@ -1,0 +1,49 @@
+name: Feature Request
+description: Proposer une nouvelle fonctionnalité
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Décris la fonctionnalité souhaitée et son contexte utilisateur.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème ou besoin
+      description: Quel problème cette fonctionnalité résout-elle ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposée
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase cible
+      options:
+        - Phase 0 — Fondations
+        - Phase 1 — Auth et vérification membres
+        - Phase 2 — Profils vendeurs et catalogue
+        - Phase 3 — Recherche et messagerie
+        - Phase 4 — Beta et hardening
+        - Phase 5 — Lancement national
+        - Phase 6 — Mobile et monétisation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: users
+    attributes:
+      label: Utilisateurs concernés
+      multiple: true
+      options:
+        - Membre-acheteur
+        - Membre-vendeur
+        - Référent paroisse
+        - Admin national
