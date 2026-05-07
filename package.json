@@ -28,6 +28,7 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@sentry/cli",
       "esbuild",
       "unrs-resolver",
       "sharp"

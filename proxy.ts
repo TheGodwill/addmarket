@@ -1,11 +1,13 @@
-import { randomBytes } from 'node:crypto'
 import { type NextRequest, NextResponse } from 'next/server'
 
+// node:crypto indisponible en Edge runtime — on utilise la Web Crypto API
 function generateNonce(): string {
-  return randomBytes(16).toString('base64')
+  const bytes = new Uint8Array(16)
+  globalThis.crypto.getRandomValues(bytes)
+  return btoa(String.fromCharCode(...bytes))
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const nonce = generateNonce()
   const isDev = process.env.NODE_ENV === 'development'
 
