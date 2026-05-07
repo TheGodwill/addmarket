@@ -1,6 +1,6 @@
 name: Bug Report
 description: Signaler un bug ou comportement inattendu
-labels: ["bug"]
+labels: ['bug']
 body:
   - type: markdown
     attributes:
