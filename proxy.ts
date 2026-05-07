@@ -66,6 +66,8 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = pathname.startsWith('/auth')
   const isApiRoute = pathname.startsWith('/api')
 
+  const isOnboardingRoute = pathname.startsWith('/onboarding')
+
   if (!user && !isAuthRoute && !isApiRoute) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('next', pathname)
@@ -74,6 +76,18 @@ export async function proxy(request: NextRequest) {
 
   if (user && isAuthRoute && !pathname.startsWith('/auth/mfa')) {
     return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // Redirect authenticated users who haven't completed onboarding
+  // Cookie `ob_done` is set by the onboarding server action after successful submission.
+  if (
+    user &&
+    !isAuthRoute &&
+    !isApiRoute &&
+    !isOnboardingRoute &&
+    !request.cookies.get('ob_done')
+  ) {
+    return NextResponse.redirect(new URL('/onboarding', request.url))
   }
 
   supabaseResponse.headers.set('Content-Security-Policy', csp)

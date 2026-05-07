@@ -128,6 +128,133 @@ export async function sendMfaDisabledEmail(to: string): Promise<void> {
   })
 }
 
+export async function sendVerificationSubmittedEmail(
+  to: string,
+  displayName: string,
+): Promise<void> {
+  await send({
+    to,
+    subject: 'Demande de vérification reçue — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Demande reçue, ${displayName}</h2>
+      <p style="color:#374151;line-height:1.7">
+        Votre demande de vérification a bien été reçue. Le référent de votre église va l'examiner
+        dans les plus brefs délais (généralement sous 72h).
+      </p>
+      <p style="color:#374151;line-height:1.7">
+        Vous recevrez un email dès qu'une décision aura été prise.
+      </p>
+    `),
+  })
+}
+
+export async function sendReferentNotificationEmail(
+  to: string,
+  memberName: string,
+  churchName: string,
+): Promise<void> {
+  await send({
+    to,
+    subject: `Nouvelle demande de vérification — ${memberName}`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Nouvelle demande à traiter</h2>
+      <p style="color:#374151;line-height:1.7">
+        <strong>${memberName}</strong> a soumis une demande de vérification pour l'église
+        <strong>${churchName}</strong>.
+      </p>
+      <p style="color:#374151;line-height:1.7">
+        Connectez-vous à ADDMarket pour consulter la demande et prendre une décision.
+      </p>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/referent/verifications`, 'Voir les demandes')}
+    `),
+  })
+}
+
+export async function sendVerificationApprovedEmail(
+  to: string,
+  displayName: string,
+  expiresAt: Date,
+): Promise<void> {
+  const expiry = expiresAt.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  await send({
+    to,
+    subject: 'Vérification approuvée — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Félicitations, ${displayName} !</h2>
+      <p style="color:#374151;line-height:1.7">
+        Votre demande de vérification a été <strong style="color:#16a34a">approuvée</strong>.
+        Vous êtes maintenant membre vérifié d'ADDMarket.
+      </p>
+      <p style="color:#374151;line-height:1.7">
+        Votre adhésion est valable jusqu'au <strong>${expiry}</strong>.<br>
+        Un rappel vous sera envoyé 30 jours avant l'expiration.
+      </p>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/`, 'Accéder à la marketplace')}
+    `),
+  })
+}
+
+export async function sendVerificationRejectedEmail(
+  to: string,
+  displayName: string,
+  reasonLabel: string,
+  reasonFree: string | null,
+): Promise<void> {
+  await send({
+    to,
+    subject: 'Demande de vérification refusée — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Demande refusée</h2>
+      <p style="color:#374151;line-height:1.7">
+        Bonjour ${displayName}, votre demande de vérification a malheureusement été
+        <strong style="color:#dc2626">refusée</strong>.
+      </p>
+      <table style="border:1px solid #fecaca;border-radius:6px;width:100%;border-collapse:collapse;margin:16px 0;background:#fef2f2">
+        <tr>
+          <td style="padding:12px 16px;color:#374151;font-size:14px">
+            <strong>Motif :</strong> ${reasonLabel}${reasonFree ? `<br><em>${reasonFree}</em>` : ''}
+          </td>
+        </tr>
+      </table>
+      <p style="color:#374151;line-height:1.7">
+        Vous pouvez soumettre une nouvelle demande après 24 heures en corrigeant les points signalés.
+      </p>
+    `),
+  })
+}
+
+export async function sendRenewalReminderEmail(
+  to: string,
+  displayName: string,
+  expiresAt: Date,
+  daysLeft: number,
+): Promise<void> {
+  const expiry = expiresAt.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  await send({
+    to,
+    subject: `Votre adhésion expire dans ${daysLeft} jours — ADDMarket`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Renouvellement à prévoir</h2>
+      <p style="color:#374151;line-height:1.7">
+        Bonjour ${displayName}, votre adhésion ADDMarket expire le <strong>${expiry}</strong>
+        (dans <strong>${daysLeft} jours</strong>).
+      </p>
+      <p style="color:#374151;line-height:1.7">
+        Pour maintenir votre accès à la marketplace, soumettez dès maintenant votre demande de renouvellement.
+      </p>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/onboarding`, 'Renouveler mon adhésion')}
+    `),
+  })
+}
+
 export async function sendMfaOtpEmail(to: string, code: string): Promise<void> {
   await send({
     to,
