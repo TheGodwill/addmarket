@@ -19,6 +19,12 @@ const serverEnvSchema = z.object({
   SENTRY_AUTH_TOKEN: z.string().optional(),
   SENTRY_ORG: z.string().optional(),
   SENTRY_PROJECT: z.string().optional(),
+  // Chiffrement téléphone (AES-256-GCM) — requis si phone_encrypted est utilisé
+  // Générer : openssl rand -hex 32
+  PHONE_ENCRYPTION_KEY: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/)
+    .optional(),
 })
 
 const result = serverEnvSchema.safeParse({
@@ -31,6 +37,7 @@ const result = serverEnvSchema.safeParse({
   SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
   SENTRY_ORG: process.env.SENTRY_ORG,
   SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+  PHONE_ENCRYPTION_KEY: process.env.PHONE_ENCRYPTION_KEY,
 })
 
 if (!result.success) {
