@@ -68,8 +68,9 @@ export async function proxy(request: NextRequest) {
   const isOnboardingRoute = pathname.startsWith('/onboarding')
   const isAdminRoute = pathname.startsWith('/admin')
   const isReferentRoute = pathname.startsWith('/referent')
+  const isLegalRoute = pathname.startsWith('/legal')
 
-  if (!user && !isAuthRoute && !isApiRoute) {
+  if (!user && !isAuthRoute && !isApiRoute && !isLegalRoute) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
@@ -86,6 +87,7 @@ export async function proxy(request: NextRequest) {
     !isAuthRoute &&
     !isApiRoute &&
     !isOnboardingRoute &&
+    !isLegalRoute &&
     !request.cookies.get('ob_done')
   ) {
     return NextResponse.redirect(new URL('/onboarding', request.url))

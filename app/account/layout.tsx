@@ -9,9 +9,18 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
           <Link href="/" className="text-lg font-semibold text-gray-900">
             ADDMarket
           </Link>
-          <nav className="flex gap-4 text-sm">
+          <nav className="flex flex-wrap gap-4 text-sm">
             <Link href="/account/security" className="text-gray-600 hover:text-gray-900">
               Sécurité
+            </Link>
+            <Link href="/account/consents" className="text-gray-600 hover:text-gray-900">
+              Consentements
+            </Link>
+            <Link href="/account/data-export" className="text-gray-600 hover:text-gray-900">
+              Mes données
+            </Link>
+            <Link href="/account/delete" className="text-red-600 hover:text-red-700">
+              Supprimer le compte
             </Link>
           </nav>
         </div>
