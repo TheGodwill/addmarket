@@ -299,6 +299,73 @@ export async function sendRoleChangeEmail(
   })
 }
 
+export async function sendDeletionRequestEmail(
+  to: string,
+  displayName: string,
+  scheduledFor: Date,
+  cancelUrl: string,
+): Promise<void> {
+  const dateStr = scheduledFor.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  await send({
+    to,
+    subject: 'Demande de suppression de compte enregistrée — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Suppression de compte planifiée</h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      <p style="color:#374151;line-height:1.7">
+        Votre demande de suppression de compte ADDMarket a bien été enregistrée.
+        Votre compte sera définitivement supprimé le <strong>${dateStr}</strong>.
+      </p>
+      <p style="color:#374151;line-height:1.7">
+        Si vous avez fait cette demande par erreur, vous pouvez annuler la suppression
+        en cliquant sur le bouton ci-dessous avant cette date.
+      </p>
+      ${ctaButton(cancelUrl, 'Annuler la suppression')}
+      <p style="color:#6b7280;font-size:13px">
+        Si vous n'êtes pas à l'origine de cette demande, contactez-nous immédiatement.
+      </p>
+    `),
+  })
+}
+
+export async function sendDeletionCancelledEmail(to: string, displayName: string): Promise<void> {
+  await send({
+    to,
+    subject: 'Suppression de compte annulée — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Suppression annulée</h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      <p style="color:#374151;line-height:1.7">
+        La suppression de votre compte ADDMarket a bien été annulée. Votre compte reste actif.
+      </p>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/`, 'Accéder à ADDMarket')}
+    `),
+  })
+}
+
+export async function sendAccountDeletedEmail(to: string): Promise<void> {
+  await send({
+    to,
+    subject: 'Votre compte ADDMarket a été supprimé',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Compte supprimé</h2>
+      <p style="color:#374151;line-height:1.7">
+        Votre compte ADDMarket a été supprimé conformément à votre demande.
+        Toutes vos données personnelles ont été effacées.
+      </p>
+      <p style="color:#374151;line-height:1.7">
+        Si vous souhaitez créer un nouveau compte à l'avenir, vous pouvez vous inscrire sur
+        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? 'https://addmarket.fr'}" style="color:#1d4ed8">ADDMarket</a>.
+      </p>
+      <p style="color:#374151;line-height:1.7">Merci de nous avoir fait confiance.</p>
+    `),
+  })
+}
+
 export async function sendMfaOtpEmail(to: string, code: string): Promise<void> {
   await send({
     to,
