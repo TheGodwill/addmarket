@@ -31,6 +31,7 @@ export const profiles = pgTable(
     // MFA — Supabase factor ID stored for quick challenge lookup
     mfaEnabledAt: timestamp('mfa_enabled_at', { withTimezone: true }),
     mfaFactorId: text('mfa_factor_id'),
+    onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

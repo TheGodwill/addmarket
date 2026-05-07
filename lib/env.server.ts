@@ -25,6 +25,8 @@ const serverEnvSchema = z.object({
     .string()
     .regex(/^[0-9a-f]{64}$/)
     .optional(),
+  // Secret partagé pour les routes cron
+  CRON_SECRET: z.string().optional(),
 })
 
 const result = serverEnvSchema.safeParse({
@@ -38,6 +40,7 @@ const result = serverEnvSchema.safeParse({
   SENTRY_ORG: process.env.SENTRY_ORG,
   SENTRY_PROJECT: process.env.SENTRY_PROJECT,
   PHONE_ENCRYPTION_KEY: process.env.PHONE_ENCRYPTION_KEY,
+  CRON_SECRET: process.env.CRON_SECRET,
 })
 
 if (!result.success) {

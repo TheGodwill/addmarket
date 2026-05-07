@@ -30,17 +30,19 @@ function createLimiter(requests: number, window: Duration): Ratelimit | null {
 }
 
 // Limites par défaut :
-// auth     → 5 req/min/IP    (login, forgot-password)
-// signup   → 3 req/h/IP      (inscription)
-// mfa      → 5 req/15min/IP  (code TOTP — verrouillage strict)
-// recovery → 5 req/15min/IP  (codes de récupération — idem)
-// api      → 60 req/min/user (endpoints standards)
+// auth           → 5 req/min/IP    (login, forgot-password)
+// signup         → 3 req/h/IP      (inscription)
+// mfa            → 5 req/15min/IP  (OTP email — verrouillage strict)
+// recovery       → 5 req/15min/IP  (codes de récupération — idem)
+// api            → 60 req/min/user (endpoints standards)
+// referentAction → 50 req/h/user   (approbations/rejets — anti-bot)
 export const rateLimiters = {
   auth: createLimiter(5, '1 m'),
   signup: createLimiter(3, '1 h'),
   mfa: createLimiter(5, '15 m'),
   recovery: createLimiter(5, '15 m'),
   api: createLimiter(60, '1 m'),
+  referentAction: createLimiter(50, '1 h'),
 } as const
 
 export type LimiterName = keyof typeof rateLimiters
