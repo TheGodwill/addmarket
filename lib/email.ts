@@ -255,6 +255,50 @@ export async function sendRenewalReminderEmail(
   })
 }
 
+const ROLE_LABELS_FR: Record<string, string> = {
+  member: 'Membre',
+  referent: 'Référent paroisse',
+  admin_local: 'Administrateur local',
+  admin_national: 'Administrateur national',
+  support: 'Support',
+}
+
+export async function sendRoleChangeEmail(
+  to: string,
+  displayName: string,
+  newRole: string,
+  action: 'promoted' | 'revoked',
+): Promise<void> {
+  const roleLabel = ROLE_LABELS_FR[newRole] ?? newRole
+  const isPromotion = action === 'promoted'
+  await send({
+    to,
+    subject: isPromotion
+      ? `Rôle attribué : ${roleLabel} — ADDMarket`
+      : 'Révocation de rôle — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">
+        ${isPromotion ? 'Nouveau rôle attribué' : 'Révocation de rôle'}
+      </h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      ${
+        isPromotion
+          ? `<p style="color:#374151;line-height:1.7">
+               Le rôle <strong>${roleLabel}</strong> vous a été attribué sur ADDMarket.
+               Vous pouvez désormais accéder aux fonctionnalités associées à ce rôle.
+             </p>
+             ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/`, 'Accéder à ADDMarket')}`
+          : `<p style="color:#374151;line-height:1.7">
+               Votre rôle sur ADDMarket a été révoqué. Vous avez été rétabli en tant que membre standard.
+             </p>
+             <p style="color:#374151;line-height:1.7">
+               Si vous pensez qu'il s'agit d'une erreur, contactez l'administrateur.
+             </p>`
+      }
+    `),
+  })
+}
+
 export async function sendMfaOtpEmail(to: string, code: string): Promise<void> {
   await send({
     to,

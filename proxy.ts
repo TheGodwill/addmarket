@@ -65,8 +65,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthRoute = pathname.startsWith('/auth')
   const isApiRoute = pathname.startsWith('/api')
-
   const isOnboardingRoute = pathname.startsWith('/onboarding')
+  const isAdminRoute = pathname.startsWith('/admin')
+  const isReferentRoute = pathname.startsWith('/referent')
 
   if (!user && !isAuthRoute && !isApiRoute) {
     const loginUrl = new URL('/auth/login', request.url)
@@ -88,6 +89,24 @@ export async function proxy(request: NextRequest) {
     !request.cookies.get('ob_done')
   ) {
     return NextResponse.redirect(new URL('/onboarding', request.url))
+  }
+
+  // Role-based route protection (uses app_metadata from getUser() — always fresh)
+  if (user) {
+    const userRole = (user.app_metadata?.role ?? 'member') as string
+
+    // /admin/* requires admin_local, admin_national, or support
+    if (isAdminRoute && !['admin_local', 'admin_national', 'support'].includes(userRole)) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    // /referent/* requires referent, admin_local, admin_national, or support
+    if (
+      isReferentRoute &&
+      !['referent', 'admin_local', 'admin_national', 'support'].includes(userRole)
+    ) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
   }
 
   supabaseResponse.headers.set('Content-Security-Policy', csp)
