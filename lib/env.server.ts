@@ -3,7 +3,12 @@ import { z } from 'zod'
 
 const serverEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  DATABASE_URL: z.string().url('DATABASE_URL doit être une URL PostgreSQL valide'),
+  DATABASE_URL: z
+    .string()
+    .regex(
+      /^(postgresql|postgres):\/\/.+/,
+      'DATABASE_URL doit être une URL PostgreSQL valide (postgresql://)',
+    ),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY est requis'),
 })
 
