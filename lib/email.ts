@@ -111,3 +111,19 @@ export async function sendNewDeviceEmail(to: string, ip: string, userAgent: stri
     `),
   })
 }
+
+export async function sendMfaDisabledEmail(to: string): Promise<void> {
+  await send({
+    to,
+    subject: 'Double authentification désactivée — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">MFA désactivée sur votre compte</h2>
+      <p style="color:#374151;line-height:1.7">
+        La double authentification (MFA) a été désactivée sur votre compte ADDMarket.
+      </p>
+      <p style="color:#374151;line-height:1.7">
+        Si vous n'êtes pas à l'origine de cette action, connectez-vous immédiatement et réactivez la MFA.
+      </p>
+    `),
+  })
+}

@@ -160,6 +160,12 @@ export async function signIn(
     sendNewDeviceEmail(data.user.email, ip, ua).catch(() => undefined)
   }
 
+  // Redirect to MFA challenge if user has TOTP enrolled
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (aal?.nextLevel === 'aal2' && aal?.currentLevel === 'aal1') {
+    redirect('/auth/mfa')
+  }
+
   redirect('/')
 }
 

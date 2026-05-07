@@ -28,6 +28,9 @@ export const profiles = pgTable(
     // FK to auth.users(id) — added in SQL migration
     verifiedBy: uuid('verified_by'),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
+    // MFA — Supabase factor ID stored for quick challenge lookup
+    mfaEnabledAt: timestamp('mfa_enabled_at', { withTimezone: true }),
+    mfaFactorId: text('mfa_factor_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
