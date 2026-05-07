@@ -6,10 +6,12 @@ import { z } from 'zod'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { validatePassword, isPasswordBreached } from '@/lib/password'
-import { sendNewDeviceEmail } from '@/lib/email'
+import { sendNewDeviceEmail, sendMfaOtpEmail } from '@/lib/email'
+import { generateOtp, storeOtp } from '@/lib/otp'
 import { logger } from '@/lib/logger'
 import { db } from '@/db/client'
-import { auditLog } from '@/db/schema'
+import { auditLog, profiles } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 type ActionResult = { error: string } | { success: string }
 
@@ -158,6 +160,23 @@ export async function signIn(
   const ua = await getUserAgent()
   if (data.user?.email) {
     sendNewDeviceEmail(data.user.email, ip, ua).catch(() => undefined)
+  }
+
+  // Check if user has email OTP MFA enabled
+  if (data.user?.id && data.user?.email) {
+    const profile = await db
+      .select({ mfaEnabledAt: profiles.mfaEnabledAt })
+      .from(profiles)
+      .where(eq(profiles.id, data.user.id))
+      .limit(1)
+
+    if (profile[0]?.mfaEnabledAt) {
+      // Generate and send OTP to user's email
+      const code = generateOtp()
+      await storeOtp(data.user.id, code)
+      sendMfaOtpEmail(data.user.email, code).catch(() => undefined)
+      redirect('/auth/mfa')
+    }
   }
 
   redirect('/')

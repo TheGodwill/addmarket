@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { type CookieOptions, createServerClient } from '@supabase/ssr'
 
-// node:crypto indisponible en Edge runtime — on utilise la Web Crypto API
 function generateNonce(): string {
   const bytes = new Uint8Array(16)
   globalThis.crypto.getRandomValues(bytes)
   return btoa(String.fromCharCode(...bytes))
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const nonce = generateNonce()
   const isDev = process.env.NODE_ENV === 'development'
 
@@ -25,7 +25,6 @@ export function proxy(request: NextRequest) {
     'upgrade-insecure-requests',
   ].join('; ')
 
-  // Force HTTPS in production (belt-and-suspenders — Vercel also handles this)
   if (
     process.env.NODE_ENV === 'production' &&
     request.headers.get('x-forwarded-proto') === 'http'
@@ -35,22 +34,52 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 })
   }
 
-  // Expose nonce to Server Components via request header
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-nonce', nonce)
 
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  })
+  let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
 
-  response.headers.set('Content-Security-Policy', csp)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          )
+        },
+      },
+    },
+  )
 
-  return response
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { pathname } = request.nextUrl
+  const isAuthRoute = pathname.startsWith('/auth')
+  const isApiRoute = pathname.startsWith('/api')
+
+  if (!user && !isAuthRoute && !isApiRoute) {
+    const loginUrl = new URL('/auth/login', request.url)
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  if (user && isAuthRoute && !pathname.startsWith('/auth/mfa')) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  supabaseResponse.headers.set('Content-Security-Policy', csp)
+  return supabaseResponse
 }
 
 export const config = {
-  matcher: [
-    // Skip Next.js internals and static files
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
