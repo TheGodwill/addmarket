@@ -1,1 +1,6 @@
 export * from './_health'
+export * from './churches'
+export * from './profiles'
+export * from './church-referents'
+export * from './verification-requests'
+export * from './audit-log'
