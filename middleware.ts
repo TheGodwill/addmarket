@@ -22,6 +22,7 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Refresh session — required to keep Supabase session alive
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -29,25 +30,16 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthRoute = pathname.startsWith('/auth')
   const isApiRoute = pathname.startsWith('/api')
-  const isMfaRoute = pathname.startsWith('/auth/mfa')
 
-  // Redirect unauthenticated users to login
+  // Redirect unauthenticated users to login (preserve destination)
   if (!user && !isAuthRoute && !isApiRoute) {
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Redirect MFA-pending users to MFA challenge (except on /auth/mfa itself)
-  if (user && !isAuthRoute && !isApiRoute) {
-    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-    if (aal?.nextLevel === 'aal2' && aal?.currentLevel === 'aal1') {
-      return NextResponse.redirect(new URL('/auth/mfa', request.url))
-    }
-  }
-
-  // Redirect authenticated users away from auth pages (except MFA route)
-  if (user && isAuthRoute && !isMfaRoute) {
+  // Redirect authenticated users away from auth pages
+  if (user && isAuthRoute && !pathname.startsWith('/auth/mfa')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 

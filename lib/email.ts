@@ -127,3 +127,25 @@ export async function sendMfaDisabledEmail(to: string): Promise<void> {
     `),
   })
 }
+
+export async function sendMfaOtpEmail(to: string, code: string): Promise<void> {
+  await send({
+    to,
+    subject: `${code} — Code de vérification ADDMarket`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Code de vérification</h2>
+      <p style="color:#374151;line-height:1.7">
+        Voici votre code de connexion ADDMarket. Il est valable <strong>10 minutes</strong>.
+      </p>
+      <div style="text-align:center;margin:32px 0">
+        <span style="display:inline-block;background:#f3f4f6;border-radius:8px;padding:16px 32px;
+                     font-family:monospace;font-size:36px;font-weight:700;letter-spacing:0.3em;
+                     color:#111827">${code}</span>
+      </div>
+      <p style="color:#6b7280;font-size:13px;line-height:1.7">
+        Si vous n'avez pas demandé ce code, ignorez cet email.<br>
+        Ne partagez jamais ce code avec quelqu'un d'autre.
+      </p>
+    `),
+  })
+}

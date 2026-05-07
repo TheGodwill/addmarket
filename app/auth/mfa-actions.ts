@@ -5,8 +5,8 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { eq, and, isNull } from 'drizzle-orm'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { verifyAndConsumeOtp } from '@/lib/otp'
 import { verifyRecoveryCode } from '@/lib/mfa'
 import { logger } from '@/lib/logger'
 import { db } from '@/db/client'
@@ -36,9 +36,11 @@ async function writeAudit(
   }
 }
 
-const codeSchema = z.object({
+const otpSchema = z.object({
   code: z.string().regex(/^\d{6}$/, 'Code invalide — 6 chiffres attendus'),
 })
+
+// ─── Verify email OTP ────────────────────────────────────────────────────────
 
 export async function verifyMfaChallenge(
   _prev: ActionResult | null,
@@ -51,7 +53,7 @@ export async function verifyMfaChallenge(
     return { error: 'Trop de tentatives. Réessayez dans 15 minutes.' }
   }
 
-  const parsed = codeSchema.safeParse(Object.fromEntries(formData))
+  const parsed = otpSchema.safeParse(Object.fromEntries(formData))
   if (!parsed.success) {
     return { error: parsed.error.errors[0]?.message ?? 'Code invalide' }
   }
@@ -64,39 +66,17 @@ export async function verifyMfaChallenge(
   } = await supabase.auth.getUser()
   if (!user) return { error: 'Session expirée. Reconnectez-vous.' }
 
-  // List enrolled factors to find TOTP factor
-  const { data: factors, error: listErr } = await supabase.auth.mfa.listFactors()
-  if (listErr || !factors?.totp?.length) {
-    return { error: 'Aucun facteur MFA trouvé.' }
-  }
-
-  const factor = factors.totp[0]
-  if (!factor) return { error: 'Aucun facteur MFA trouvé.' }
-
-  // Create challenge
-  const { data: challengeData, error: challengeErr } = await supabase.auth.mfa.challenge({
-    factorId: factor.id,
-  })
-  if (challengeErr || !challengeData) {
-    logger.warn({ userId: user.id }, '[mfa] Échec création challenge')
-    return { error: 'Impossible de créer le défi MFA. Réessayez.' }
-  }
-
-  // Verify code
-  const { error: verifyErr } = await supabase.auth.mfa.verify({
-    factorId: factor.id,
-    challengeId: challengeData.id,
-    code,
-  })
-
-  if (verifyErr) {
+  const valid = await verifyAndConsumeOtp(user.id, code)
+  if (!valid) {
     await writeAudit('mfa.challenge_failed', user.id, {})
-    return { error: 'Code incorrect. Réessayez.' }
+    return { error: 'Code incorrect ou expiré. Réessayez ou demandez un nouveau code.' }
   }
 
   await writeAudit('mfa.challenge_success', user.id, {})
   redirect('/')
 }
+
+// ─── Recovery code ───────────────────────────────────────────────────────────
 
 const recoverySchema = z.object({
   code: z
@@ -111,7 +91,6 @@ export async function useRecoveryCodeAction(
 ): Promise<ActionResult> {
   const ip = await getIp()
 
-  // Strict rate limit: 5 attempts per IP
   const { success: rateLimitOk } = await checkRateLimit('recovery', ip)
   if (!rateLimitOk) {
     return { error: 'Trop de tentatives. Réessayez dans 15 minutes.' }
@@ -130,13 +109,11 @@ export async function useRecoveryCodeAction(
   } = await supabase.auth.getUser()
   if (!user) return { error: 'Session expirée. Reconnectez-vous.' }
 
-  // Fetch all unused recovery codes for this user
   const storedCodes = await db
     .select()
     .from(mfaRecoveryCodes)
     .where(and(eq(mfaRecoveryCodes.userId, user.id), isNull(mfaRecoveryCodes.usedAt)))
 
-  // Verify code against each stored hash
   let matchedId: string | null = null
   for (const stored of storedCodes) {
     const ok = await verifyRecoveryCode(code, stored.codeHash)
@@ -151,7 +128,6 @@ export async function useRecoveryCodeAction(
     return { error: 'Code de récupération invalide ou déjà utilisé.' }
   }
 
-  // Mark code as used
   await db
     .update(mfaRecoveryCodes)
     .set({ usedAt: new Date() })
@@ -159,14 +135,7 @@ export async function useRecoveryCodeAction(
 
   await writeAudit('mfa.recovery_code_used', user.id, {})
 
-  // Disable the MFA factor via admin API so user has no pending challenge
-  const adminClient = createAdminClient()
-  const { data: factorsData } = await adminClient.auth.admin.mfa.listFactors({ userId: user.id })
-  for (const factor of factorsData?.factors ?? []) {
-    await adminClient.auth.admin.mfa.deleteFactor({ userId: user.id, id: factor.id })
-  }
-
-  // Clear profile MFA fields
+  // Disable MFA so user can re-enroll
   await db
     .update(profiles)
     .set({ mfaEnabledAt: null, mfaFactorId: null })
@@ -175,4 +144,30 @@ export async function useRecoveryCodeAction(
   await writeAudit('mfa.disabled_via_recovery', user.id, {})
 
   redirect('/account/security?notice=mfa_reset')
+}
+
+// ─── Resend OTP ──────────────────────────────────────────────────────────────
+
+export async function resendMfaOtp(_prev: ActionResult | null): Promise<ActionResult> {
+  const ip = await getIp()
+
+  const { success: rateLimitOk } = await checkRateLimit('mfa', ip)
+  if (!rateLimitOk) {
+    return { error: 'Trop de tentatives. Réessayez dans 15 minutes.' }
+  }
+
+  const supabase = await createServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user?.email) return { error: 'Session expirée. Reconnectez-vous.' }
+
+  const { generateOtp, storeOtp } = await import('@/lib/otp')
+  const { sendMfaOtpEmail } = await import('@/lib/email')
+
+  const code = generateOtp()
+  await storeOtp(user.id, code)
+  sendMfaOtpEmail(user.email, code).catch(() => undefined)
+
+  return { success: 'Nouveau code envoyé. Vérifiez votre messagerie.' }
 }
