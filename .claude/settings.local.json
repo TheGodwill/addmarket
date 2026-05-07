@@ -6,7 +6,9 @@
       "PowerShell(Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; $next = Test-Path \"node_modules\\\\next\"; $react = Test-Path \"node_modules\\\\react\"; $ts = Test-Path \"node_modules\\\\typescript\"; Write-Output \"next: $next | react: $react | typescript: $ts\"; \\(Get-ChildItem node_modules -Directory | Measure-Object\\).Count)",
       "PowerShell(Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; $node = \"C:\\\\Program Files\\\\nodejs\\\\node.exe\"; $pnpm = \"C:\\\\Users\\\\YVES SORHO\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\"; & $node node_modules\\\\next\\\\dist\\\\bin\\\\next --version 2>&1)",
       "PowerShell($pnpm = \"C:\\\\Users\\\\YVES SORHO\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\"; Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; & $pnpm typecheck 2>&1)",
-      "PowerShell($pnpm = \"C:\\\\Users\\\\YVES SORHO\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\"; Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; & $pnpm lint 2>&1)"
+      "PowerShell($pnpm = \"C:\\\\Users\\\\YVES SORHO\\\\AppData\\\\Roaming\\\\npm\\\\pnpm.cmd\"; Set-Location \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; & $pnpm lint 2>&1)",
+      "PowerShell(cd \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; Select-String -Path package.json -Pattern \"drizzle-kit|@node-rs|@sentry|@upstash|pino\" | ForEach-Object { $_.Line.Trim\\(\\) })",
+      "PowerShell(cd \"c:\\\\Users\\\\YVES SORHO\\\\Downloads\\\\ADDMarket\"; \\(Get-Content package.json -Raw\\) -replace '\"drizzle-kit\": \"\\\\^0\\\\.24\\\\.2\"', '\"drizzle-kit\": \"^0.31.10\"' | Set-Content package.json; Remove-Item node_modules -Recurse -Force -ErrorAction SilentlyContinue; Write-Host \"updated\")"
     ]
   }
 }
