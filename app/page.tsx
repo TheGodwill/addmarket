@@ -9,9 +9,9 @@ import { HeroSearch } from './hero-search'
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: 'ADDMarket — Marketplace Assemblées de Dieu France',
+  title: "ADDMarket — Marketplace Assemblées de Dieu Côte d'Ivoire",
   description:
-    'Trouvez des produits et services proposés par des membres vérifiés des Assemblées de Dieu France.',
+    "Trouvez des produits et services proposés par des membres vérifiés des Assemblées de Dieu de Côte d'Ivoire.",
 }
 
 async function getHomeData() {
@@ -76,7 +76,7 @@ export default async function HomePage() {
       <section className="bg-gradient-to-br from-blue-700 to-blue-500 px-4 py-16 text-center text-white">
         <h1 className="mb-2 text-3xl font-bold sm:text-4xl">ADDMarket</h1>
         <p className="mb-8 text-blue-100">
-          La marketplace de la communauté Assemblées de Dieu France
+          La marketplace des membres Assemblées de Dieu de Côte d&apos;Ivoire
         </p>
         <div className="mx-auto max-w-xl">
           <HeroSearch />
