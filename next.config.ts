@@ -12,8 +12,9 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   {
+    // geolocation=() removed — needed for /explore "near me" feature
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), payment=()',
+    value: 'camera=(), microphone=(), payment=()',
   },
 ]
 
@@ -28,6 +29,14 @@ const nextConfig: NextConfig = {
     ],
   },
   typedRoutes: true,
+  // mapbox-gl ships as ESM — tell webpack to treat it as external on the server
+  // and use the browser bundle on the client
+  webpack(config, { isServer }) {
+    if (isServer) {
+      config.externals = [...(config.externals ?? []), 'mapbox-gl']
+    }
+    return config
+  },
 }
 
 export default withSentryConfig(nextConfig, {

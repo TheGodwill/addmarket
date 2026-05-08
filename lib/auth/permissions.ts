@@ -22,6 +22,15 @@ export type Permission =
   | 'admin.users.read'
   | 'admin.users.promote'
   | 'admin.users.revoke'
+  | 'review.create'
+  | 'review.update.own'
+  | 'review.respond.own_seller'
+  | 'review.report'
+  | 'review.moderate'
+  | 'content.report'
+  | 'moderation.read'
+  | 'moderation.action'
+  | 'moderation.action.ban'
 
 export const ROLE_PERMISSIONS: Record<AppRole, ReadonlyArray<Permission>> = {
   member: [
@@ -32,6 +41,11 @@ export const ROLE_PERMISSIONS: Record<AppRole, ReadonlyArray<Permission>> = {
     'listing.create',
     'listing.update.own',
     'audit.read.own_actions',
+    'review.create',
+    'review.update.own',
+    'review.respond.own_seller',
+    'review.report',
+    'content.report',
   ],
   referent: [
     'profile.read.public',
@@ -42,6 +56,13 @@ export const ROLE_PERMISSIONS: Record<AppRole, ReadonlyArray<Permission>> = {
     'listing.create',
     'listing.update.own',
     'audit.read.own_actions',
+    'review.create',
+    'review.update.own',
+    'review.respond.own_seller',
+    'review.report',
+    'content.report',
+    'moderation.read',
+    'moderation.action',
   ],
   admin_local: [
     'profile.read.public',
@@ -57,6 +78,14 @@ export const ROLE_PERMISSIONS: Record<AppRole, ReadonlyArray<Permission>> = {
     'admin.users.read',
     'admin.users.promote',
     'admin.users.revoke',
+    'review.create',
+    'review.update.own',
+    'review.respond.own_seller',
+    'review.report',
+    'review.moderate',
+    'content.report',
+    'moderation.read',
+    'moderation.action',
   ],
   admin_national: [
     'profile.read.public',
@@ -75,6 +104,15 @@ export const ROLE_PERMISSIONS: Record<AppRole, ReadonlyArray<Permission>> = {
     'admin.users.read',
     'admin.users.promote',
     'admin.users.revoke',
+    'review.create',
+    'review.update.own',
+    'review.respond.own_seller',
+    'review.report',
+    'review.moderate',
+    'content.report',
+    'moderation.read',
+    'moderation.action',
+    'moderation.action.ban',
   ],
   support: [
     'profile.read.public',
@@ -84,6 +122,11 @@ export const ROLE_PERMISSIONS: Record<AppRole, ReadonlyArray<Permission>> = {
     'audit.read.own_actions',
     'audit.read.all',
     'admin.users.read',
+    'review.moderate',
+    'content.report',
+    'moderation.read',
+    'moderation.action',
+    'moderation.action.ban',
   ],
 }
 

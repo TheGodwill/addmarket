@@ -1,4 +1,4 @@
-import { index, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
+import { index, integer, pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import { churches } from './churches'
 
@@ -32,6 +32,12 @@ export const profiles = pgTable(
     mfaEnabledAt: timestamp('mfa_enabled_at', { withTimezone: true }),
     mfaFactorId: text('mfa_factor_id'),
     onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
+    // Moderation fields
+    suspendedUntil: timestamp('suspended_until', { withTimezone: true }),
+    bannedAt: timestamp('banned_at', { withTimezone: true }),
+    warningCount: integer('warning_count').notNull().default(0),
+    // Anti-abuse: count of reports that were marked abusive (false reports)
+    falseReportCount: integer('false_report_count').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },

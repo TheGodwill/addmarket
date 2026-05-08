@@ -75,8 +75,8 @@ export default async function AdminVerificationsPage({
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+    <div>
+      <div>
         <h1 className="mb-6 text-2xl font-bold text-gray-900">Vérifications — Vue nationale</h1>
 
         {/* Church stats */}
@@ -173,6 +173,6 @@ export default async function AdminVerificationsPage({
           </div>
         </section>
       </div>
-    </main>
+    </div>
   )
 }

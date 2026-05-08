@@ -366,6 +366,238 @@ export async function sendAccountDeletedEmail(to: string): Promise<void> {
   })
 }
 
+export async function sendModerationWarningEmail(
+  to: string,
+  displayName: string,
+  reason: string,
+): Promise<void> {
+  await send({
+    to,
+    subject: 'Avertissement de modération — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Avertissement</h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      <p style="color:#374151;line-height:1.7">
+        Votre compte a reçu un avertissement suite à un signalement.
+      </p>
+      <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:16px;margin:16px 0">
+        <strong>Motif :</strong> ${reason}
+      </div>
+      <p style="color:#374151;line-height:1.7">
+        En cas de récidive, votre compte pourra être suspendu. Si vous estimez que cet
+        avertissement est injustifié, vous pouvez contacter notre équipe.
+      </p>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/community/guidelines`, 'Consulter la charte communautaire')}
+    `),
+  })
+}
+
+export async function sendModerationSuspensionEmail(
+  to: string,
+  displayName: string,
+  reason: string,
+  until: Date,
+): Promise<void> {
+  const dateStr = until.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  await send({
+    to,
+    subject: 'Suspension de votre compte — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Suspension temporaire</h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      <p style="color:#374151;line-height:1.7">
+        Votre compte ADDMarket a été <strong>suspendu jusqu'au ${dateStr}</strong>.
+      </p>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0">
+        <strong>Motif :</strong> ${reason}
+      </div>
+      <p style="color:#374151;line-height:1.7">
+        Si vous pensez que cette suspension est injustifiée, vous pouvez faire appel
+        en répondant à cet email.
+      </p>
+    `),
+  })
+}
+
+export async function sendModerationBanEmail(
+  to: string,
+  displayName: string,
+  reason: string,
+): Promise<void> {
+  await send({
+    to,
+    subject: 'Bannissement de votre compte — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Compte banni</h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      <p style="color:#374151;line-height:1.7">
+        Votre compte ADDMarket a été <strong>définitivement banni</strong>.
+      </p>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0">
+        <strong>Motif :</strong> ${reason}
+      </div>
+      <p style="color:#374151;line-height:1.7">
+        Cette décision fait suite à de multiples violations de notre charte communautaire.
+        Si vous estimez qu'il s'agit d'une erreur, contactez-nous.
+      </p>
+    `),
+  })
+}
+
+export async function sendNewReviewEmail(
+  to: string,
+  sellerName: string,
+  reviewerName: string,
+  rating: number,
+  sellerSlug: string,
+): Promise<void> {
+  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating)
+  await send({
+    to,
+    subject: `Nouvel avis reçu — ${reviewerName} vous a évalué`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Vous avez reçu un nouvel avis</h2>
+      <p style="color:#374151;line-height:1.7">
+        Bonjour <strong>${sellerName}</strong>,<br>
+        <strong>${reviewerName}</strong> vous a laissé un avis sur ADDMarket.
+      </p>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0;text-align:center">
+        <span style="font-size:28px;color:#f59e0b">${stars}</span>
+      </div>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/sellers/${sellerSlug}`, 'Voir mon profil et répondre')}
+      <p style="color:#6b7280;font-size:13px">Vous pouvez répondre à cet avis depuis votre tableau de bord vendeur.</p>
+    `),
+  })
+}
+
+export async function sendReviewResponseEmail(
+  to: string,
+  reviewerName: string,
+  sellerName: string,
+  sellerSlug: string,
+): Promise<void> {
+  await send({
+    to,
+    subject: `${sellerName} a répondu à votre avis — ADDMarket`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Réponse à votre avis</h2>
+      <p style="color:#374151;line-height:1.7">
+        Bonjour <strong>${reviewerName}</strong>,<br>
+        <strong>${sellerName}</strong> a répondu à votre avis sur ADDMarket.
+      </p>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/sellers/${sellerSlug}`, 'Voir la réponse')}
+    `),
+  })
+}
+
+export async function sendNewMessageEmail(
+  to: string,
+  recipientName: string,
+  senderName: string,
+  conversationId: string,
+): Promise<void> {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/messages/${conversationId}`
+  await send({
+    to,
+    subject: `${senderName} vous a envoyé un message — ADDMarket`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Nouveau message</h2>
+      <p style="color:#374151;line-height:1.7">
+        Bonjour <strong>${recipientName}</strong>,<br>
+        <strong>${senderName}</strong> vous a envoyé un message sur ADDMarket.
+      </p>
+      ${ctaButton(url, 'Lire le message')}
+      <p style="color:#6b7280;font-size:13px">
+        Pour ne plus recevoir ces notifications, modifiez vos
+        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/account/notifications" style="color:#1d4ed8">préférences de notification</a>.
+      </p>
+    `),
+  })
+}
+
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? 'contact@addmarket.ci'
+
+const CONTACT_CATEGORY_LABELS: Record<string, string> = {
+  support: 'Support technique',
+  securite: 'Sécurité',
+  legal: 'Légal / RGPD',
+  presse: 'Presse / Partenariat',
+  partenariat: 'Partenariat',
+}
+
+export async function sendContactEmail(data: {
+  name: string
+  email: string
+  category: string
+  message: string
+}): Promise<void> {
+  const categoryLabel = CONTACT_CATEGORY_LABELS[data.category] ?? data.category
+  await send({
+    to: SUPPORT_EMAIL,
+    subject: `[Contact] ${categoryLabel} — ${data.name}`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Nouveau message de contact</h2>
+      <table style="border:1px solid #e5e7eb;border-radius:6px;width:100%;border-collapse:collapse;margin:16px 0">
+        <tr style="background:#f9fafb">
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600;white-space:nowrap">Nom</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px">${data.name}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600">Email</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px">${data.email}</td>
+        </tr>
+        <tr style="background:#f9fafb">
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600">Catégorie</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px">${categoryLabel}</td>
+        </tr>
+      </table>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin:16px 0">
+        <p style="color:#374151;font-size:14px;line-height:1.7;margin:0;white-space:pre-wrap">${data.message}</p>
+      </div>
+      <p style="color:#6b7280;font-size:12px">Répondre directement à cet email pour contacter ${data.name}.</p>
+    `),
+  })
+}
+
+export async function sendFeedbackEmail(data: {
+  type: 'bug' | 'suggestion' | 'question'
+  description: string
+  url: string
+  userId?: string
+  userEmail?: string
+}): Promise<void> {
+  const typeLabel =
+    data.type === 'bug' ? '🐛 Bug' : data.type === 'suggestion' ? '💡 Suggestion' : '❓ Question'
+  await send({
+    to: SUPPORT_EMAIL,
+    subject: `[Feedback bêta] ${typeLabel}`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Retour bêta — ${typeLabel}</h2>
+      <table style="border:1px solid #e5e7eb;border-radius:6px;width:100%;border-collapse:collapse;margin:16px 0">
+        <tr style="background:#f9fafb">
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600;white-space:nowrap">Page</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px;word-break:break-all">${data.url}</td>
+        </tr>
+        ${
+          data.userId
+            ? `<tr>
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600">Utilisateur</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px">${data.userEmail ?? data.userId}</td>
+        </tr>`
+            : ''
+        }
+      </table>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin:16px 0">
+        <p style="color:#374151;font-size:14px;line-height:1.7;margin:0;white-space:pre-wrap">${data.description}</p>
+      </div>
+    `),
+  })
+}
+
 export async function sendMfaOtpEmail(to: string, code: string): Promise<void> {
   await send({
     to,

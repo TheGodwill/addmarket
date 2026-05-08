@@ -12,6 +12,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import type { InferInsertModel, InferSelectModel } from 'drizzle-orm'
 import { sellerProfiles } from './seller-profiles'
+import { categories } from './categories'
 
 // Managed by trigger — never written directly from application code
 const tsvector = customType<{ data: string }>({
@@ -30,6 +31,7 @@ export const listings = pgTable(
     sellerId: uuid('seller_id')
       .notNull()
       .references(() => sellerProfiles.id, { onDelete: 'cascade' }),
+    categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
     title: text('title').notNull(),
     slug: text('slug').notNull(),
     description: text('description').notNull(),
@@ -54,6 +56,7 @@ export const listings = pgTable(
     index('listings_status_idx').on(table.status),
     index('listings_seller_id_idx').on(table.sellerId),
     index('listings_published_at_idx').on(table.publishedAt),
+    index('listings_category_id_idx').on(table.categoryId),
     // GIN index for full-text search — created in migration SQL (not expressible in Drizzle)
   ],
 )
