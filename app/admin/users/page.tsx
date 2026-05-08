@@ -70,13 +70,10 @@ export default async function AdminUsersPage({
     .limit(10)
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
+    <div>
+      <div>
+        <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Gestion des utilisateurs</h1>
-          <a href="/admin/verifications" className="text-sm text-blue-600 hover:underline">
-            ← Vérifications
-          </a>
         </div>
 
         {/* Search */}
@@ -215,6 +212,6 @@ export default async function AdminUsersPage({
           </div>
         </section>
       </div>
-    </main>
+    </div>
   )
 }

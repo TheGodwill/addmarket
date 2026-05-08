@@ -39,13 +39,10 @@ export default async function AdminReviewsPage({
   const { reviews, total, totalPages } = await getAdminReviews(filter, page)
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
+    <div>
+      <div>
+        <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Modération des avis ({total})</h1>
-          <Link href="/admin/users" className="text-sm text-blue-600 hover:underline">
-            ← Utilisateurs
-          </Link>
         </div>
 
         {/* Filter tabs */}
@@ -102,6 +99,6 @@ export default async function AdminReviewsPage({
           </div>
         )}
       </div>
-    </main>
+    </div>
   )
 }
