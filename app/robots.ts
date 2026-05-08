@@ -7,8 +7,16 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/sellers/', '/listings/'],
-        disallow: ['/admin/', '/sell/', '/api/', '/referent/', '/account/', '/onboarding'],
+        allow: ['/', '/sellers/', '/listings/', '/community/'],
+        disallow: [
+          '/admin/',
+          '/sell/',
+          '/api/',
+          '/referent/',
+          '/account/',
+          '/onboarding',
+          '/moderation/',
+        ],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
