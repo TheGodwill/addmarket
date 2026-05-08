@@ -167,9 +167,17 @@ export default async function SellerDashboardPage({
       )}
 
       {daysToExpiry !== null && daysToExpiry <= 60 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          Votre adhésion expire dans <strong>{daysToExpiry} jours</strong>. Renouvelez-la pour
-          maintenir votre profil visible.
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <span>
+            Votre adhésion expire dans <strong>{daysToExpiry} jours</strong>. Renouvelez-la pour
+            maintenir votre profil visible.
+          </span>
+          <Link
+            href="/sell/membership"
+            className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+          >
+            Renouveler →
+          </Link>
         </div>
       )}
 
@@ -315,6 +323,7 @@ export default async function SellerDashboardPage({
             { href: '/sell/orders', icon: '🛒', label: 'Commandes & devis', accent: false },
             { href: '/sell/profile/edit', icon: '✏️', label: 'Modifier mon profil', accent: false },
             { href: '/sell/reviews', icon: '⭐', label: 'Voir mes avis', accent: false },
+            { href: '/sell/membership', icon: '🪪', label: 'Mon adhésion', accent: false },
           ].map(({ href, icon, label, accent }) => (
             <Link
               key={href}

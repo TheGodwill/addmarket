@@ -20,7 +20,7 @@ export function getPublicKey(): string | null {
 }
 
 export async function createCheckoutSession(opts: {
-  listingId: string
+  orderId: string
   listingTitle: string
   amountCents: number
   currency: string
@@ -28,7 +28,7 @@ export async function createCheckoutSession(opts: {
   sellerProfileId: string
   successUrl: string
   cancelUrl: string
-}): Promise<string | null> {
+}): Promise<{ url: string; sessionId: string } | null> {
   if (!stripe) {
     logger.warn('[stripe] Stripe non configuré — checkout désactivé')
     return null
@@ -47,16 +47,55 @@ export async function createCheckoutSession(opts: {
       },
     ],
     metadata: {
-      listingId: opts.listingId,
+      type: 'listing_purchase',
+      orderId: opts.orderId,
       buyerId: opts.buyerId,
       sellerProfileId: opts.sellerProfileId,
     },
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     payment_intent_data: {
-      metadata: { listingId: opts.listingId, buyerId: opts.buyerId },
+      metadata: { orderId: opts.orderId, buyerId: opts.buyerId },
     },
   })
 
-  return session.url
+  if (!session.url) return null
+  return { url: session.url, sessionId: session.id }
+}
+
+export async function createMembershipCheckoutSession(opts: {
+  membershipOrderId: string
+  userId: string
+  amountCents: number
+  successUrl: string
+  cancelUrl: string
+}): Promise<{ url: string; sessionId: string } | null> {
+  if (!stripe) {
+    logger.warn('[stripe] Stripe non configuré — membership checkout désactivé')
+    return null
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: 'eur',
+          unit_amount: opts.amountCents,
+          product_data: { name: 'Adhésion ADDMarket — 1 an' },
+        },
+      },
+    ],
+    metadata: {
+      type: 'membership_renewal',
+      membershipOrderId: opts.membershipOrderId,
+      userId: opts.userId,
+    },
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+  })
+
+  if (!session.url) return null
+  return { url: session.url, sessionId: session.id }
 }

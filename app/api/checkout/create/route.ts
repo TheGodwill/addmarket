@@ -31,7 +31,6 @@ export async function POST(req: Request) {
 
   const { listingId } = parsed.data
 
-  // Load listing
   const listing = await db
     .select()
     .from(listings)
@@ -47,7 +46,6 @@ export async function POST(req: Request) {
     )
   }
 
-  // Prevent buying own listing
   const sellerRow = await db
     .select({ userId: sellerProfiles.userId })
     .from(sellerProfiles)
@@ -64,7 +62,6 @@ export async function POST(req: Request) {
 
   const baseUrl = clientEnv.NEXT_PUBLIC_APP_URL ?? 'https://addmarket.fr'
 
-  // Create pending order record
   const [order] = await db
     .insert(orders)
     .values({
@@ -79,8 +76,8 @@ export async function POST(req: Request) {
 
   if (!order) return NextResponse.json({ error: 'Erreur création commande' }, { status: 500 })
 
-  const checkoutUrl = await createCheckoutSession({
-    listingId,
+  const result = await createCheckoutSession({
+    orderId: order.id,
     listingTitle: listing.title,
     amountCents: listing.priceCents,
     currency: listing.currency.toLowerCase(),
@@ -90,11 +87,15 @@ export async function POST(req: Request) {
     cancelUrl: `${baseUrl}/listings/${listingId}?cancelled=1`,
   })
 
-  if (!checkoutUrl) {
+  if (!result) {
     return NextResponse.json({ error: 'Paiement non configuré' }, { status: 503 })
   }
 
-  // Store session reference (updated by webhook once confirmed)
+  await db
+    .update(orders)
+    .set({ stripeCheckoutSessionId: result.sessionId })
+    .where(eq(orders.id, order.id))
+
   await db.insert(auditLog).values({
     actorId: user.id,
     action: 'order.create',
@@ -103,5 +104,5 @@ export async function POST(req: Request) {
     metadata: { listingId, amountCents: listing.priceCents },
   })
 
-  return NextResponse.json({ url: checkoutUrl })
+  return NextResponse.json({ url: result.url })
 }
