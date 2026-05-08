@@ -25,9 +25,6 @@ export interface GeocodedPlace {
 // Forward geocode: city name → coordinates (server-side only)
 export async function geocodeCity(city: string): Promise<GeocodedPlace | null> {
   if (!MAPBOX_TOKEN) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('[geocoding] MAPBOX_SECRET_TOKEN is required in production')
-    }
     return null
   }
 

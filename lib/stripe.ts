@@ -5,9 +5,7 @@ import { logger } from './logger'
 function createStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY
   if (!key) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('[stripe] STRIPE_SECRET_KEY est requis en production')
-    }
+    logger.warn('[stripe] STRIPE_SECRET_KEY absent — paiements désactivés')
     return null
   }
   return new Stripe(key, { apiVersion: '2026-04-22.dahlia' })
