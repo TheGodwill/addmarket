@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/server'
 import { clientEnv } from '@/lib/env'
 import { safeJsonLd } from '@/lib/safe-json-ld'
 import type { OpeningHours } from '@/db/schema'
+import { ContactSellerButton } from '@/app/messages/contact-seller-button'
 
 export const revalidate = 300
 
@@ -205,42 +206,35 @@ export default async function SellerProfilePage({ params }: Props) {
             </div>
 
             {/* CTA */}
-            {user ? (
-              <div className="flex gap-2">
+            {user && user.id !== seller.userId ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
                 {seller.contactPhone && (
                   <a
                     href={`tel:${seller.contactPhone}`}
-                    className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
                     Appeler
                   </a>
                 )}
-                {seller.contactEmail && (
-                  <a
-                    href={`mailto:${seller.contactEmail}`}
-                    className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                  >
-                    Envoyer un message
-                  </a>
-                )}
-                {!seller.contactPhone && !seller.contactEmail && seller.contactWhatsapp && (
+                {seller.contactWhatsapp && (
                   <a
                     href={`https://wa.me/${seller.contactWhatsapp.replace(/\D/g, '')}`}
-                    className="rounded-xl bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                    className="rounded-xl border border-green-200 bg-white px-4 py-2 text-center text-sm font-medium text-green-700 hover:bg-green-50"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     WhatsApp
                   </a>
                 )}
+                <ContactSellerButton sellerProfileId={seller.id} sellerName={seller.businessName} />
               </div>
-            ) : (
+            ) : !user ? (
               <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-2 text-center text-sm">
                 <Link href="/auth/login" className="font-semibold text-blue-600 hover:underline">
                   Connectez-vous pour contacter →
                 </Link>
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Description */}
