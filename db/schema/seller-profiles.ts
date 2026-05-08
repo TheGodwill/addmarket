@@ -69,6 +69,7 @@ export const sellerProfiles = pgTable(
     contactEmail: text('contact_email'),
     contactWhatsapp: text('contact_whatsapp'),
     socialLinks: jsonb('social_links').$type<SocialLinks>().notNull().default({}),
+    slug: text('slug').unique(),
     logoUrl: text('logo_url'),
     coverUrl: text('cover_url'),
     isActive: boolean('is_active').notNull().default(true),

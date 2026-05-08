@@ -2,11 +2,12 @@
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js'
-import { eq } from 'drizzle-orm'
+import { eq, not, and } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/db/client'
 import { sellerProfiles, profiles, categories } from '@/db/schema'
 import { logger } from '@/lib/logger'
+import { slugify } from '@/lib/slug'
 
 // ---- Zod schemas for each step ----
 
@@ -125,6 +126,22 @@ type FullProfile = z.infer<typeof fullProfileSchema>
 
 type ActionResult<T = void> = { error: string } | { success: true; data?: T }
 
+async function uniqueSellerSlug(base: string, excludeId?: string): Promise<string> {
+  let slug = base || 'vendeur'
+  let i = 1
+  for (;;) {
+    const conditions = [eq(sellerProfiles.slug, slug)]
+    if (excludeId) conditions.push(not(eq(sellerProfiles.id, excludeId)))
+    const existing = await db
+      .select({ id: sellerProfiles.id })
+      .from(sellerProfiles)
+      .where(and(...conditions))
+      .limit(1)
+    if (!existing.at(0)) return slug
+    slug = `${base}-${i++}`
+  }
+}
+
 // ---- Server Actions ----
 
 async function getVerifiedUser() {
@@ -175,12 +192,14 @@ export async function publishSellerProfile(
   }
 
   const openingHours = d.openingHours ?? {}
+  const slug = await uniqueSellerSlug(slugify(d.businessName))
 
   try {
     const [inserted] = await db
       .insert(sellerProfiles)
       .values({
         userId: user.id,
+        slug,
         businessName: d.businessName,
         description: d.description,
         categoryId: d.categoryId,
