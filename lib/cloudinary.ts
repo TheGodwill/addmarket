@@ -78,6 +78,46 @@ export async function uploadSellerImage(
   }
 }
 
+export async function uploadListingImage(buffer: Buffer, userId: string): Promise<UploadResult> {
+  if (!isConfigured()) {
+    throw new Error('Cloudinary non configuré — ajoutez CLOUDINARY_* dans .env.local')
+  }
+  configure()
+
+  const maxBytes = 5 * 1024 * 1024
+  if (buffer.length > maxBytes) {
+    throw new Error('Fichier trop volumineux — maximum 5MB')
+  }
+
+  const result = await new Promise<{
+    secure_url: string
+    public_id: string
+    width: number
+    height: number
+  }>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: `addmarket/listings/${userId}`,
+        transformation: { width: 1600, height: 1600, crop: 'limit' as const },
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error) reject(error)
+        else if (result) resolve(result)
+        else reject(new Error('Upload Cloudinary échoué'))
+      },
+    )
+    stream.end(buffer)
+  })
+
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+    width: result.width,
+    height: result.height,
+  }
+}
+
 export function cloudinaryConfigured(): boolean {
   return isConfigured()
 }

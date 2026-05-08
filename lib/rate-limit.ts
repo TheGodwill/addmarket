@@ -45,6 +45,8 @@ export const rateLimiters = {
   api: createLimiter(60, '1 m'),
   referentAction: createLimiter(50, '1 h'),
   adminAction: createLimiter(10, '1 h'),
+  listingCreate: createLimiter(20, '1 h'),
+  listingUpdate: createLimiter(100, '1 h'),
 } as const
 
 export type LimiterName = keyof typeof rateLimiters
