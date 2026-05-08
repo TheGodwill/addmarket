@@ -27,6 +27,10 @@ const serverEnvSchema = z.object({
     .optional(),
   // Secret partagé pour les routes cron
   CRON_SECRET: z.string().optional(),
+  // Cloudinary — upload logo/cover vendeur (optionnel, uploads désactivés si absent)
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 })
 
 const result = serverEnvSchema.safeParse({
@@ -41,6 +45,9 @@ const result = serverEnvSchema.safeParse({
   SENTRY_PROJECT: process.env.SENTRY_PROJECT,
   PHONE_ENCRYPTION_KEY: process.env.PHONE_ENCRYPTION_KEY,
   CRON_SECRET: process.env.CRON_SECRET,
+  CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
 })
 
 if (!result.success) {
