@@ -366,6 +366,52 @@ export async function sendAccountDeletedEmail(to: string): Promise<void> {
   })
 }
 
+export async function sendNewReviewEmail(
+  to: string,
+  sellerName: string,
+  reviewerName: string,
+  rating: number,
+  sellerSlug: string,
+): Promise<void> {
+  const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating)
+  await send({
+    to,
+    subject: `Nouvel avis reçu — ${reviewerName} vous a évalué`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Vous avez reçu un nouvel avis</h2>
+      <p style="color:#374151;line-height:1.7">
+        Bonjour <strong>${sellerName}</strong>,<br>
+        <strong>${reviewerName}</strong> vous a laissé un avis sur ADDMarket.
+      </p>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0;text-align:center">
+        <span style="font-size:28px;color:#f59e0b">${stars}</span>
+      </div>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/sellers/${sellerSlug}`, 'Voir mon profil et répondre')}
+      <p style="color:#6b7280;font-size:13px">Vous pouvez répondre à cet avis depuis votre tableau de bord vendeur.</p>
+    `),
+  })
+}
+
+export async function sendReviewResponseEmail(
+  to: string,
+  reviewerName: string,
+  sellerName: string,
+  sellerSlug: string,
+): Promise<void> {
+  await send({
+    to,
+    subject: `${sellerName} a répondu à votre avis — ADDMarket`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Réponse à votre avis</h2>
+      <p style="color:#374151;line-height:1.7">
+        Bonjour <strong>${reviewerName}</strong>,<br>
+        <strong>${sellerName}</strong> a répondu à votre avis sur ADDMarket.
+      </p>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/sellers/${sellerSlug}`, 'Voir la réponse')}
+    `),
+  })
+}
+
 export async function sendMfaOtpEmail(to: string, code: string): Promise<void> {
   await send({
     to,
