@@ -4,9 +4,6 @@ import { MeiliSearch } from 'meilisearch'
 function createClient(apiKey: string | undefined): MeiliSearch | null {
   const host = process.env.MEILISEARCH_HOST
   if (!host || !apiKey) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('[meilisearch] MEILISEARCH_HOST and API key are required in production')
-    }
     return null
   }
   return new MeiliSearch({ host, apiKey })
