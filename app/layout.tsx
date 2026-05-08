@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { CookieBanner } from '@/components/legal/cookie-banner'
+import { BetaBanner } from '@/components/beta/beta-banner'
+import { FeedbackWidget } from '@/components/beta/feedback-widget'
 import { SiteHeader } from '@/components/nav/site-header'
 import './globals.css'
 
@@ -57,9 +59,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={inter.className}>
+        <BetaBanner />
         <SiteHeader />
         {children}
         <CookieBanner />
+        <FeedbackWidget />
       </body>
     </html>
   )

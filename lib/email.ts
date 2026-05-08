@@ -519,6 +519,85 @@ export async function sendNewMessageEmail(
   })
 }
 
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? 'contact@addmarket.ci'
+
+const CONTACT_CATEGORY_LABELS: Record<string, string> = {
+  support: 'Support technique',
+  securite: 'Sécurité',
+  legal: 'Légal / RGPD',
+  presse: 'Presse / Partenariat',
+  partenariat: 'Partenariat',
+}
+
+export async function sendContactEmail(data: {
+  name: string
+  email: string
+  category: string
+  message: string
+}): Promise<void> {
+  const categoryLabel = CONTACT_CATEGORY_LABELS[data.category] ?? data.category
+  await send({
+    to: SUPPORT_EMAIL,
+    subject: `[Contact] ${categoryLabel} — ${data.name}`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Nouveau message de contact</h2>
+      <table style="border:1px solid #e5e7eb;border-radius:6px;width:100%;border-collapse:collapse;margin:16px 0">
+        <tr style="background:#f9fafb">
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600;white-space:nowrap">Nom</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px">${data.name}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600">Email</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px">${data.email}</td>
+        </tr>
+        <tr style="background:#f9fafb">
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600">Catégorie</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px">${categoryLabel}</td>
+        </tr>
+      </table>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin:16px 0">
+        <p style="color:#374151;font-size:14px;line-height:1.7;margin:0;white-space:pre-wrap">${data.message}</p>
+      </div>
+      <p style="color:#6b7280;font-size:12px">Répondre directement à cet email pour contacter ${data.name}.</p>
+    `),
+  })
+}
+
+export async function sendFeedbackEmail(data: {
+  type: 'bug' | 'suggestion' | 'question'
+  description: string
+  url: string
+  userId?: string
+  userEmail?: string
+}): Promise<void> {
+  const typeLabel =
+    data.type === 'bug' ? '🐛 Bug' : data.type === 'suggestion' ? '💡 Suggestion' : '❓ Question'
+  await send({
+    to: SUPPORT_EMAIL,
+    subject: `[Feedback bêta] ${typeLabel}`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Retour bêta — ${typeLabel}</h2>
+      <table style="border:1px solid #e5e7eb;border-radius:6px;width:100%;border-collapse:collapse;margin:16px 0">
+        <tr style="background:#f9fafb">
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600;white-space:nowrap">Page</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px;word-break:break-all">${data.url}</td>
+        </tr>
+        ${
+          data.userId
+            ? `<tr>
+          <td style="padding:10px 16px;color:#6b7280;font-size:13px;font-weight:600">Utilisateur</td>
+          <td style="padding:10px 16px;color:#111827;font-size:13px">${data.userEmail ?? data.userId}</td>
+        </tr>`
+            : ''
+        }
+      </table>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin:16px 0">
+        <p style="color:#374151;font-size:14px;line-height:1.7;margin:0;white-space:pre-wrap">${data.description}</p>
+      </div>
+    `),
+  })
+}
+
 export async function sendMfaOtpEmail(to: string, code: string): Promise<void> {
   await send({
     to,
