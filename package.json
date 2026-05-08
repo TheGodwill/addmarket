@@ -26,6 +26,8 @@
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
     "db:seed": "dotenv -e .env.local -- tsx --conditions react-server db/seed.ts",
     "db:seed-catalog": "dotenv -e .env.local -- tsx --conditions react-server db/seed-catalog.ts",
+    "sync:meili": "dotenv -e .env.local -- tsx --conditions react-server scripts/sync-meili.ts",
+    "meili:config": "dotenv -e .env.local -- tsx --conditions react-server -e \"import('./lib/meilisearch').then(m => m.configureIndexes()).then(() => process.exit(0))\"",
     "prepare": "husky"
   },
   "pnpm": {
@@ -70,6 +72,7 @@
     "resend": "^6.12.3",
     "server-only": "^0.0.1",
     "tailwind-merge": "^2.5.2",
+    "meilisearch": "^0.46.0",
     "use-debounce": "^10.1.1",
     "zod": "^3.23.8",
     "zxcvbn": "^4.4.2"
