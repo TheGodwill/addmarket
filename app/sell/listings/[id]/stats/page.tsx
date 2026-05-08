@@ -1,12 +1,29 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/db/client'
-import { auditLog } from '@/db/schema'
-import { and, eq, desc } from 'drizzle-orm'
+import { auditLog, listingViews } from '@/db/schema'
+import { and, eq, desc, sql, gte } from 'drizzle-orm'
 import { getListingForEdit } from '../../actions'
+import { ViewsBarChart } from '@/components/charts/views-bar-chart'
 
-export const metadata = { title: 'Statistiques listing — ADDMarket' }
+export const metadata: Metadata = { title: 'Statistiques listing — ADDMarket' }
+
+function fillDailyGaps(
+  rows: { day: string; views: number }[],
+  days: number,
+): { day: string; views: number }[] {
+  const map = new Map(rows.map((r) => [r.day.slice(0, 10), r.views]))
+  const result: { day: string; views: number }[] = []
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    const key = d.toISOString().slice(0, 10)
+    result.push({ day: key, views: map.get(key) ?? 0 })
+  }
+  return result
+}
 
 export default async function ListingStatsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -21,12 +38,40 @@ export default async function ListingStatsPage({ params }: { params: Promise<{ i
 
   const { listing } = result
 
-  const auditRows = await db
-    .select({ action: auditLog.action, createdAt: auditLog.createdAt })
-    .from(auditLog)
-    .where(and(eq(auditLog.targetId, id), eq(auditLog.targetType, 'listing')))
-    .orderBy(desc(auditLog.createdAt))
-    .limit(20)
+  // eslint-disable-next-line react-hooks/purity -- async server component, Date.now() is safe
+  const nowMs = Date.now()
+  const thirtyDaysAgo = new Date(nowMs - 30 * 24 * 60 * 60 * 1000)
+
+  const [auditRows, totalViewsRow, dailyViewRows] = await Promise.all([
+    db
+      .select({ action: auditLog.action, createdAt: auditLog.createdAt })
+      .from(auditLog)
+      .where(and(eq(auditLog.targetId, id), eq(auditLog.targetType, 'listing')))
+      .orderBy(desc(auditLog.createdAt))
+      .limit(20),
+
+    db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(listingViews)
+      .where(eq(listingViews.listingId, id)),
+
+    db
+      .select({
+        day: sql<string>`date_trunc('day', ${listingViews.viewedAt})::text`,
+        views: sql<number>`count(*)::int`,
+      })
+      .from(listingViews)
+      .where(and(eq(listingViews.listingId, id), gte(listingViews.viewedAt, thirtyDaysAgo)))
+      .groupBy(sql`date_trunc('day', ${listingViews.viewedAt})`)
+      .orderBy(sql`date_trunc('day', ${listingViews.viewedAt})`),
+  ])
+
+  const totalViews = totalViewsRow.at(0)?.total ?? 0
+  const chartData = fillDailyGaps(
+    dailyViewRows.map((r) => ({ day: r.day, views: Number(r.views) })),
+    30,
+  )
+  const viewsLast30 = chartData.reduce((s, d) => s + d.views, 0)
 
   const statusLabel: Record<string, string> = {
     active: 'Actif',
@@ -74,20 +119,25 @@ export default async function ListingStatsPage({ params }: { params: Promise<{ i
               <span>{listing.publishedAt.toLocaleDateString('fr-FR')}</span>
             </div>
           )}
-          <div>
-            <span className="text-gray-400">Modifié le :</span>{' '}
-            <span>{listing.updatedAt.toLocaleDateString('fr-FR')}</span>
-          </div>
         </div>
       </div>
 
-      {/* Analytics placeholder */}
-      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
-        <p className="text-sm font-medium text-gray-700">Analytiques détaillées</p>
-        <p className="mt-1 text-xs text-gray-500">
-          Le suivi des vues, contacts et apparitions dans les recherches sera disponible dans une
-          prochaine version.
-        </p>
+      {/* View stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+          <p className="text-3xl font-bold text-blue-600">{totalViews}</p>
+          <p className="mt-1 text-xs text-gray-500">Vues totales</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+          <p className="text-3xl font-bold text-blue-600">{viewsLast30}</p>
+          <p className="mt-1 text-xs text-gray-500">Vues ces 30 jours</p>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-3 text-sm font-semibold text-gray-900">Vues par jour (30 jours)</h2>
+        <ViewsBarChart data={chartData} />
       </div>
 
       {/* Audit log */}
