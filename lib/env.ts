@@ -11,6 +11,8 @@ const clientEnvSchema = z.object({
   NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
   // Mapbox — optionnel (requis pour la page /explore)
   NEXT_PUBLIC_MAPBOX_TOKEN: z.string().optional(),
+  // Stripe — clé publique uniquement côté client
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
 })
 
 const result = clientEnvSchema.safeParse({
@@ -21,6 +23,7 @@ const result = clientEnvSchema.safeParse({
   NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
   NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
 })
 
 if (!result.success) {

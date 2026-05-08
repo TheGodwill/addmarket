@@ -11,6 +11,8 @@ import { headers } from 'next/headers'
 import { clientEnv } from '@/lib/env'
 import { safeJsonLd } from '@/lib/safe-json-ld'
 import { ImageGallery } from './image-gallery'
+import { BuyButton } from './buy-button'
+import { QuoteForm } from './quote-form'
 
 export const revalidate = 300
 
@@ -189,18 +191,30 @@ export default async function ListingDetailPage({ params }: Props) {
           {/* Sidebar */}
           <aside className="space-y-4">
             {/* CTA */}
-            {user ? (
-              seller?.slug && (
-                <Link
-                  href={`/sellers/${seller.slug}`}
-                  className="block w-full rounded-xl bg-blue-600 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  Contacter le vendeur
-                </Link>
-              )
-            ) : (
+            {user && seller && user.id !== sellerRows.at(0)?.id ? (
+              <div className="space-y-2">
+                {listing.isQuoteOnly ? (
+                  <QuoteForm listingId={listing.id} sellerProfileId={seller.id} />
+                ) : listing.priceCents != null ? (
+                  <BuyButton
+                    listingId={listing.id}
+                    label={`Acheter — ${(listing.priceCents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}`}
+                  />
+                ) : null}
+                {seller.slug && (
+                  <Link
+                    href={`/sellers/${seller.slug}`}
+                    className="block w-full rounded-xl border border-gray-200 py-2.5 text-center text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    Voir le profil vendeur
+                  </Link>
+                )}
+              </div>
+            ) : !user ? (
               <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center">
-                <p className="text-sm text-gray-700">Connectez-vous pour contacter le vendeur.</p>
+                <p className="text-sm text-gray-700">
+                  Connectez-vous pour acheter ou demander un devis.
+                </p>
                 <Link
                   href="/auth/login"
                   className="mt-2 inline-block text-sm font-semibold text-blue-600 hover:underline"
@@ -208,7 +222,7 @@ export default async function ListingDetailPage({ params }: Props) {
                   Se connecter →
                 </Link>
               </div>
-            )}
+            ) : null}
 
             {/* Seller card */}
             {seller && (

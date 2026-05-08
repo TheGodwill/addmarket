@@ -312,6 +312,7 @@ export default async function SellerDashboardPage({
           {[
             { href: '/sell/listings/new', icon: '➕', label: 'Créer un listing', accent: true },
             { href: '/sell/listings', icon: '📋', label: 'Gérer mes listings', accent: false },
+            { href: '/sell/orders', icon: '🛒', label: 'Commandes & devis', accent: false },
             { href: '/sell/profile/edit', icon: '✏️', label: 'Modifier mon profil', accent: false },
             { href: '/sell/reviews', icon: '⭐', label: 'Voir mes avis', accent: false },
           ].map(({ href, icon, label, accent }) => (
