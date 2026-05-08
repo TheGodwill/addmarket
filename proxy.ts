@@ -80,17 +80,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // Redirect authenticated users who haven't completed onboarding
-  // Cookie `ob_done` is set by the onboarding server action after successful submission.
-  if (
-    user &&
-    !isAuthRoute &&
-    !isApiRoute &&
-    !isOnboardingRoute &&
-    !isLegalRoute &&
-    !request.cookies.get('ob_done')
-  ) {
-    return NextResponse.redirect(new URL('/onboarding', request.url))
+  // Redirect authenticated users who haven't completed onboarding.
+  // DB check (not cookie) prevents bypass via manually forged ob_done cookie.
+  if (user && !isAuthRoute && !isApiRoute && !isOnboardingRoute && !isLegalRoute) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed_at')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.onboarding_completed_at) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
   }
 
   // Role-based route protection (uses app_metadata from getUser() — always fresh)
