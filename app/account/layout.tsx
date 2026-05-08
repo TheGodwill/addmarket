@@ -13,6 +13,9 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
             <Link href="/account/security" className="text-gray-600 hover:text-gray-900">
               Sécurité
             </Link>
+            <Link href="/account/notifications" className="text-gray-600 hover:text-gray-900">
+              Notifications
+            </Link>
             <Link href="/account/consents" className="text-gray-600 hover:text-gray-900">
               Consentements
             </Link>

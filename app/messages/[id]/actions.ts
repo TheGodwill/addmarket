@@ -7,6 +7,7 @@ import { conversations, messages, sellerProfiles, auditLog } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { headers } from 'next/headers'
+import { notifyNewMessage } from '@/lib/notify'
 
 const sendSchema = z.object({
   conversationId: z.string().uuid(),
@@ -74,6 +75,12 @@ export async function sendMessage(formData: FormData) {
     targetId: conversationId,
     metadata: { length: body.length },
   })
+
+  // Determine recipient and send email notification (non-blocking)
+  const recipientId = conv.buyerId === user.id ? sellerRow?.userId : conv.buyerId
+  if (recipientId) {
+    void notifyNewMessage(recipientId, user.id, conversationId)
+  }
 
   return { ok: true }
 }
@@ -164,6 +171,9 @@ export async function startConversation(formData: FormData) {
     targetId: conversationId,
     metadata: { length: body.length, new: !existing },
   })
+
+  // Notify seller (non-blocking)
+  void notifyNewMessage(sellerRow.userId, user.id, conversationId)
 
   redirect(`/messages/${conversationId}`)
 }

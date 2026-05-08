@@ -494,6 +494,31 @@ export async function sendReviewResponseEmail(
   })
 }
 
+export async function sendNewMessageEmail(
+  to: string,
+  recipientName: string,
+  senderName: string,
+  conversationId: string,
+): Promise<void> {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/messages/${conversationId}`
+  await send({
+    to,
+    subject: `${senderName} vous a envoyé un message — ADDMarket`,
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Nouveau message</h2>
+      <p style="color:#374151;line-height:1.7">
+        Bonjour <strong>${recipientName}</strong>,<br>
+        <strong>${senderName}</strong> vous a envoyé un message sur ADDMarket.
+      </p>
+      ${ctaButton(url, 'Lire le message')}
+      <p style="color:#6b7280;font-size:13px">
+        Pour ne plus recevoir ces notifications, modifiez vos
+        <a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/account/notifications" style="color:#1d4ed8">préférences de notification</a>.
+      </p>
+    `),
+  })
+}
+
 export async function sendMfaOtpEmail(to: string, code: string): Promise<void> {
   await send({
     to,
