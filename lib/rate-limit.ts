@@ -50,8 +50,8 @@ export const rateLimiters = {
   reviewCreate: createLimiter(5, '1 d'),
   profileUpdate: createLimiter(20, '1 h'),
   searchApi: createLimiter(60, '1 m'),
-  // messagerie : 30 messages par minute par utilisateur
   messageSend: createLimiter(30, '1 m'),
+  verificationSubmit: createLimiter(3, '1 d'),
 } as const
 
 export type LimiterName = keyof typeof rateLimiters

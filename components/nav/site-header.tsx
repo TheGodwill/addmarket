@@ -6,21 +6,23 @@ import { and, count, eq, isNull, ne, or } from 'drizzle-orm'
 import { UnreadBadge } from './unread-badge'
 
 async function getUnreadCount(userId: string): Promise<number> {
-  // Count unread messages in conversations where user is buyer or seller
-  const rows = await db
-    .select({ n: count(messages.id) })
-    .from(messages)
-    .innerJoin(conversations, eq(conversations.id, messages.conversationId))
-    .leftJoin(sellerProfiles, eq(sellerProfiles.id, conversations.sellerProfileId))
-    .where(
-      and(
-        isNull(messages.readAt),
-        ne(messages.senderId, userId),
-        or(eq(conversations.buyerId, userId), eq(sellerProfiles.userId, userId)),
-      ),
-    )
-
-  return Number(rows.at(0)?.n ?? 0)
+  try {
+    const rows = await db
+      .select({ n: count(messages.id) })
+      .from(messages)
+      .innerJoin(conversations, eq(conversations.id, messages.conversationId))
+      .leftJoin(sellerProfiles, eq(sellerProfiles.id, conversations.sellerProfileId))
+      .where(
+        and(
+          isNull(messages.readAt),
+          ne(messages.senderId, userId),
+          or(eq(conversations.buyerId, userId), eq(sellerProfiles.userId, userId)),
+        ),
+      )
+    return Number(rows.at(0)?.n ?? 0)
+  } catch {
+    return 0
+  }
 }
 
 export async function SiteHeader() {

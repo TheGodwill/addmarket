@@ -10,6 +10,9 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
             ADDMarket
           </Link>
           <nav className="flex flex-wrap gap-4 text-sm">
+            <Link href="/account/verification" className="text-gray-600 hover:text-gray-900">
+              Vérification
+            </Link>
             <Link href="/account/security" className="text-gray-600 hover:text-gray-900">
               Sécurité
             </Link>
