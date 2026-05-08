@@ -9,6 +9,8 @@ const clientEnvSchema = z.object({
   // Analytics — optionnel
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
   NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
+  // Mapbox — optionnel (requis pour la page /explore)
+  NEXT_PUBLIC_MAPBOX_TOKEN: z.string().optional(),
 })
 
 const result = clientEnvSchema.safeParse({
@@ -18,6 +20,7 @@ const result = clientEnvSchema.safeParse({
   NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
   NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
 })
 
 if (!result.success) {

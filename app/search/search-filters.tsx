@@ -1,6 +1,7 @@
 'use client'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
+import { CityInput } from './city-input'
 
 interface Category {
   id: string
@@ -23,6 +24,8 @@ export function SearchFilters({ categories }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [geoLoading, setGeoLoading] = useState(false)
+  const [geoError, setGeoError] = useState<string | null>(null)
 
   const set = useCallback(
     (key: string, value: string | undefined) => {
@@ -43,6 +46,32 @@ export function SearchFilters({ categories }: Props) {
   const priceMin = searchParams.get('price_min') ?? ''
   const priceMax = searchParams.get('price_max') ?? ''
   const city = searchParams.get('city') ?? ''
+
+  function handleNearMe() {
+    if (!navigator.geolocation) {
+      setGeoError('Géolocalisation non supportée par ce navigateur')
+      return
+    }
+    setGeoLoading(true)
+    setGeoError(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoLoading(false)
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('lat', pos.coords.latitude.toFixed(6))
+        params.set('lng', pos.coords.longitude.toFixed(6))
+        params.set('radius', '25')
+        params.delete('city')
+        params.delete('page')
+        router.push(`${pathname}?${params.toString()}`, { scroll: false })
+      },
+      () => {
+        setGeoLoading(false)
+        setGeoError('Autorisation refusée. Activez la localisation dans les paramètres.')
+      },
+      { timeout: 8000 },
+    )
+  }
 
   return (
     <aside className="space-y-6">
@@ -122,15 +151,27 @@ export function SearchFilters({ categories }: Props) {
         </div>
       </div>
 
-      {/* City */}
+      {/* Localisation */}
       <div>
-        <h3 className="mb-2 text-sm font-semibold text-gray-700">Ville</h3>
-        <input
-          type="text"
-          placeholder="Ex : Paris"
-          value={city}
-          onChange={(e) => set('city', e.target.value || undefined)}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        <h3 className="mb-2 text-sm font-semibold text-gray-700">Localisation</h3>
+        <button
+          type="button"
+          onClick={handleNearMe}
+          disabled={geoLoading}
+          className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+        >
+          {geoLoading ? (
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-blue-400 border-t-blue-700" />
+          ) : (
+            '📍'
+          )}
+          Près de chez moi
+        </button>
+        {geoError && <p className="mb-1 text-xs text-red-500">{geoError}</p>}
+        <CityInput
+          defaultValue={city}
+          onSelect={(name) => set('city', name)}
+          onClear={() => set('city', undefined)}
         />
       </div>
 

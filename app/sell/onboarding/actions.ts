@@ -9,6 +9,8 @@ import { sellerProfiles, profiles, categories, auditLog } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { slugify } from '@/lib/slug'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { geocodeCity } from '@/lib/geocoding'
+import { sql } from 'drizzle-orm'
 
 // ---- Zod schemas for each step ----
 
@@ -195,6 +197,11 @@ export async function publishSellerProfile(
   const openingHours = d.openingHours ?? {}
   const slug = await uniqueSellerSlug(slugify(d.businessName))
 
+  // Geocode first city for the PostGIS service_location point
+  const firstCity = d.serviceCities.at(0)
+  const geo = firstCity ? await geocodeCity(firstCity) : null
+  const serviceLocationWkt = geo ? `POINT(${geo.lng} ${geo.lat})` : null
+
   try {
     const [inserted] = await db
       .insert(sellerProfiles)
@@ -205,6 +212,9 @@ export async function publishSellerProfile(
         description: d.description,
         categoryId: d.categoryId,
         serviceCities: d.serviceCities,
+        ...(serviceLocationWkt
+          ? { serviceLocation: sql`ST_GeogFromText(${serviceLocationWkt})` }
+          : {}),
         serviceAreaKm: d.serviceAreaKm ?? 30,
         contactPhone: d.contactPhone ?? null,
         contactEmail: d.contactEmail || null,
@@ -222,6 +232,9 @@ export async function publishSellerProfile(
           description: d.description,
           categoryId: d.categoryId,
           serviceCities: d.serviceCities,
+          ...(serviceLocationWkt
+            ? { serviceLocation: sql`ST_GeogFromText(${serviceLocationWkt})` }
+            : {}),
           serviceAreaKm: d.serviceAreaKm ?? 30,
           contactPhone: d.contactPhone ?? null,
           contactEmail: d.contactEmail || null,
@@ -266,6 +279,19 @@ export async function updateSellerProfile(data: Partial<FullProfile>): Promise<A
   if (data.facebook) socialLinks.facebook = data.facebook
   if (data.website) socialLinks.website = data.website
 
+  // Geocode first service city for PostGIS point (server-side, token never exposed)
+  let serviceLocationWkt: string | undefined
+  if (data.serviceCities && data.serviceCities.length > 0) {
+    const firstCity = data.serviceCities[0]
+    if (firstCity) {
+      const geo = await geocodeCity(firstCity)
+      if (geo) {
+        // WKT POINT(lng lat) — PostGIS expects longitude first
+        serviceLocationWkt = `POINT(${geo.lng} ${geo.lat})`
+      }
+    }
+  }
+
   await db
     .update(sellerProfiles)
     .set({
@@ -273,6 +299,9 @@ export async function updateSellerProfile(data: Partial<FullProfile>): Promise<A
       ...(data.description !== undefined ? { description: data.description } : {}),
       ...(data.categoryId ? { categoryId: data.categoryId } : {}),
       ...(data.serviceCities ? { serviceCities: data.serviceCities } : {}),
+      ...(serviceLocationWkt
+        ? { serviceLocation: sql`ST_GeogFromText(${serviceLocationWkt})` }
+        : {}),
       ...(data.serviceAreaKm !== undefined ? { serviceAreaKm: data.serviceAreaKm } : {}),
       ...(data.contactPhone !== undefined ? { contactPhone: data.contactPhone ?? null } : {}),
       ...(data.contactEmail !== undefined ? { contactEmail: data.contactEmail || null } : {}),
