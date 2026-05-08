@@ -25,6 +25,7 @@
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
     "db:seed": "dotenv -e .env.local -- tsx --conditions react-server db/seed.ts",
+    "db:seed-catalog": "dotenv -e .env.local -- tsx --conditions react-server db/seed-catalog.ts",
     "prepare": "husky"
   },
   "pnpm": {
