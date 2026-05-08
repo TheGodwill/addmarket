@@ -366,6 +366,88 @@ export async function sendAccountDeletedEmail(to: string): Promise<void> {
   })
 }
 
+export async function sendModerationWarningEmail(
+  to: string,
+  displayName: string,
+  reason: string,
+): Promise<void> {
+  await send({
+    to,
+    subject: 'Avertissement de modération — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Avertissement</h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      <p style="color:#374151;line-height:1.7">
+        Votre compte a reçu un avertissement suite à un signalement.
+      </p>
+      <div style="background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:16px;margin:16px 0">
+        <strong>Motif :</strong> ${reason}
+      </div>
+      <p style="color:#374151;line-height:1.7">
+        En cas de récidive, votre compte pourra être suspendu. Si vous estimez que cet
+        avertissement est injustifié, vous pouvez contacter notre équipe.
+      </p>
+      ${ctaButton(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/community/guidelines`, 'Consulter la charte communautaire')}
+    `),
+  })
+}
+
+export async function sendModerationSuspensionEmail(
+  to: string,
+  displayName: string,
+  reason: string,
+  until: Date,
+): Promise<void> {
+  const dateStr = until.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  await send({
+    to,
+    subject: 'Suspension de votre compte — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Suspension temporaire</h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      <p style="color:#374151;line-height:1.7">
+        Votre compte ADDMarket a été <strong>suspendu jusqu'au ${dateStr}</strong>.
+      </p>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0">
+        <strong>Motif :</strong> ${reason}
+      </div>
+      <p style="color:#374151;line-height:1.7">
+        Si vous pensez que cette suspension est injustifiée, vous pouvez faire appel
+        en répondant à cet email.
+      </p>
+    `),
+  })
+}
+
+export async function sendModerationBanEmail(
+  to: string,
+  displayName: string,
+  reason: string,
+): Promise<void> {
+  await send({
+    to,
+    subject: 'Bannissement de votre compte — ADDMarket',
+    html: baseTemplate(`
+      <h2 style="color:#111827;font-size:22px;margin:0 0 16px">Compte banni</h2>
+      <p style="color:#374151;line-height:1.7">Bonjour ${displayName},</p>
+      <p style="color:#374151;line-height:1.7">
+        Votre compte ADDMarket a été <strong>définitivement banni</strong>.
+      </p>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0">
+        <strong>Motif :</strong> ${reason}
+      </div>
+      <p style="color:#374151;line-height:1.7">
+        Cette décision fait suite à de multiples violations de notre charte communautaire.
+        Si vous estimez qu'il s'agit d'une erreur, contactez-nous.
+      </p>
+    `),
+  })
+}
+
 export async function sendNewReviewEmail(
   to: string,
   sellerName: string,
