@@ -24,7 +24,17 @@ const tagSchema = z
   .regex(/^[\w\-\s]+$/u, 'Tags alphanumériques uniquement')
 
 const imageEntrySchema = z.object({
-  url: z.string().url('URL image invalide'),
+  url: z
+    .string()
+    .url('URL image invalide')
+    .refine((url) => {
+      try {
+        const { hostname } = new URL(url)
+        return hostname === 'res.cloudinary.com' || hostname.endsWith('.supabase.co')
+      } catch {
+        return false
+      }
+    }, 'URL image doit provenir de Cloudinary ou Supabase'),
   altText: z.string().max(200).default(''),
 })
 

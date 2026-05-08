@@ -48,6 +48,7 @@ export const rateLimiters = {
   listingCreate: createLimiter(20, '1 h'),
   listingUpdate: createLimiter(100, '1 h'),
   reviewCreate: createLimiter(5, '1 d'),
+  profileUpdate: createLimiter(20, '1 h'),
 } as const
 
 export type LimiterName = keyof typeof rateLimiters

@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '@/db/client'
-import { sellerReviews, sellerProfiles, profiles } from '@/db/schema'
+import { sellerReviews, sellerProfiles, profiles, auditLog } from '@/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { resolveUserRole, can } from '@/lib/auth/permissions'
 import { sendReviewResponseEmail } from '@/lib/email'
@@ -54,6 +54,14 @@ export async function respondToReview(
     .update(sellerReviews)
     .set({ response: trimmed, responseUpdatedAt: new Date() })
     .where(eq(sellerReviews.id, reviewId))
+
+  await db.insert(auditLog).values({
+    actorId: user.id,
+    action: 'review.respond',
+    targetType: 'review',
+    targetId: reviewId,
+    metadata: { sellerId },
+  })
 
   // Notify reviewer if they have an account (fire-and-forget)
   if (review.reviewerId) {

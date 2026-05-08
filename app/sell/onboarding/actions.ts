@@ -5,9 +5,10 @@ import { isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js'
 import { eq, not, and } from 'drizzle-orm'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/db/client'
-import { sellerProfiles, profiles, categories } from '@/db/schema'
+import { sellerProfiles, profiles, categories, auditLog } from '@/db/schema'
 import { logger } from '@/lib/logger'
 import { slugify } from '@/lib/slug'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // ---- Zod schemas for each step ----
 
@@ -248,6 +249,9 @@ export async function updateSellerProfile(data: Partial<FullProfile>): Promise<A
   const { user, error } = await getVerifiedUser()
   if (error || !user) return { error: error ?? 'Non autorisé' }
 
+  const rl = await checkRateLimit('profileUpdate', user.id)
+  if (!rl.success) return { error: 'Trop de modifications — réessayez dans une heure' }
+
   const existing = await db
     .select({ id: sellerProfiles.id })
     .from(sellerProfiles)
@@ -281,6 +285,16 @@ export async function updateSellerProfile(data: Partial<FullProfile>): Promise<A
       ...(data.coverUrl !== undefined ? { coverUrl: data.coverUrl || null } : {}),
     })
     .where(eq(sellerProfiles.id, row.id))
+
+  await db.insert(auditLog).values({
+    actorId: user.id,
+    action: 'seller.update',
+    targetType: 'seller',
+    targetId: row.id,
+    metadata: {
+      fields: Object.keys(data).filter((k) => data[k as keyof typeof data] !== undefined),
+    },
+  })
 
   return { success: true }
 }

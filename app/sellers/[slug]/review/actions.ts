@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { and, eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { db } from '@/db/client'
-import { sellerProfiles, sellerReviews, profiles } from '@/db/schema'
+import { sellerProfiles, sellerReviews, profiles, auditLog } from '@/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { resolveUserRole, can } from '@/lib/auth/permissions'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -95,6 +95,13 @@ export async function submitReview(
         updatedAt: new Date(),
       })
       .where(eq(sellerReviews.id, existingReview.id))
+    await db.insert(auditLog).values({
+      actorId: user.id,
+      action: 'review.update',
+      targetType: 'review',
+      targetId: existingReview.id,
+      metadata: { sellerId, rating, autoStatus },
+    })
     revalidatePath(`/sellers/${seller.slug}`)
     revalidatePath(`/sellers/${seller.slug}/reviews`)
     return { success: true }
@@ -102,15 +109,27 @@ export async function submitReview(
 
   // New review
   const autoStatus = getAutoStatus(comment ?? null)
-  await db.insert(sellerReviews).values({
-    sellerId,
-    reviewerId: user.id,
-    rating,
-    ...(comment !== undefined ? { comment } : {}),
-    ...(listingId !== undefined ? { listingId } : {}),
-    status: autoStatus,
-    isVerified: true,
-  })
+  const [inserted] = await db
+    .insert(sellerReviews)
+    .values({
+      sellerId,
+      reviewerId: user.id,
+      rating,
+      ...(comment !== undefined ? { comment } : {}),
+      ...(listingId !== undefined ? { listingId } : {}),
+      status: autoStatus,
+      isVerified: true,
+    })
+    .returning({ id: sellerReviews.id })
+  if (inserted) {
+    await db.insert(auditLog).values({
+      actorId: user.id,
+      action: 'review.create',
+      targetType: 'review',
+      targetId: inserted.id,
+      metadata: { sellerId, rating, autoStatus },
+    })
+  }
 
   // Notify seller by email (fire-and-forget)
   if (seller.contactEmail && seller.slug) {

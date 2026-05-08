@@ -14,6 +14,7 @@ import {
 } from '@/db/schema'
 import { createClient } from '@/lib/supabase/server'
 import { clientEnv } from '@/lib/env'
+import { safeJsonLd } from '@/lib/safe-json-ld'
 import type { OpeningHours } from '@/db/schema'
 
 export const revalidate = 300
@@ -143,10 +144,7 @@ export default async function SellerProfilePage({ params }: Props) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <div className="mx-auto max-w-4xl">
         {/* Cover */}
         <div className="relative h-48 overflow-hidden rounded-b-2xl bg-gradient-to-r from-blue-100 to-blue-200 sm:h-64">

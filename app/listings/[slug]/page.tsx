@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/server'
 import { recordListingView, getListingViewCount } from '@/lib/views'
 import { headers } from 'next/headers'
 import { clientEnv } from '@/lib/env'
+import { safeJsonLd } from '@/lib/safe-json-ld'
 import { ImageGallery } from './image-gallery'
 
 export const revalidate = 300
@@ -146,10 +147,7 @@ export default async function ListingDetailPage({ params }: Props) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
         {/* Image gallery */}
         <ImageGallery images={galleryImages} title={listing.title} />
