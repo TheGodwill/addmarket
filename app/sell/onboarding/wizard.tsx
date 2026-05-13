@@ -514,6 +514,7 @@ export function SellerOnboardingWizard({ categories }: WizardProps) {
             <div>
               <label className={labelCls}>Logo (max 2 MB — JPEG, PNG, WebP)</label>
               {draft.logoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={draft.logoUrl}
                   alt="Logo"
@@ -538,6 +539,7 @@ export function SellerOnboardingWizard({ categories }: WizardProps) {
             <div>
               <label className={labelCls}>Image de couverture (max 5 MB — JPEG, PNG, WebP)</label>
               {draft.coverUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={draft.coverUrl}
                   alt="Couverture"
@@ -566,6 +568,7 @@ export function SellerOnboardingWizard({ categories }: WizardProps) {
             <h1 className="text-xl font-semibold text-gray-900">Aperçu et publication</h1>
             <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
               {draft.coverUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={draft.coverUrl}
                   alt="Couverture"
@@ -574,6 +577,7 @@ export function SellerOnboardingWizard({ categories }: WizardProps) {
               )}
               <div className="flex items-start gap-3">
                 {draft.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={draft.logoUrl}
                     alt="Logo"

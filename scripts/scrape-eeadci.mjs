@@ -129,21 +129,21 @@ async function fetchPage(regionId) {
 
 const allChurches = [];
 
-console.log('Scraping EEADCI directory...\n');
+console.warn('Scraping EEADCI directory...\n');
 
 for (const region of REGIONS) {
   process.stdout.write(`  Région ${region.id} — ${region.name}: `);
 
   const html = await fetchPage(region.id);
   if (!html) {
-    console.log('erreur réseau');
+    console.warn('erreur réseau');
     await sleep(DELAY);
     continue;
   }
 
   const churches = parseChurches(html, region);
   allChurches.push(...churches);
-  console.log(`${churches.length} église(s)`);
+  console.warn(`${churches.length} église(s)`);
   await sleep(DELAY);
 }
 
@@ -167,4 +167,4 @@ const rows = allChurches.map(c => [
 const csv = BOM + [headers.map(q).join(sep), ...rows].join('\r\n');
 writeFileSync('churches_CI.csv', csv, 'utf-8');
 
-console.log(`\n✓ ${allChurches.length} assemblées exportées → churches_CI.csv`);
+console.warn(`\n✓ ${allChurches.length} assemblées exportées → churches_CI.csv`);

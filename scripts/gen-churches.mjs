@@ -402,4 +402,4 @@ const rows = churches.map(([name, city]) => {
 
 const csv = BOM + [headers.map(q).join(sep), ...rows].join('\r\n');
 writeFileSync('churches_ADD_France.csv', csv, 'utf-8');
-console.log(`✓ ${churches.length} églises exportées → churches_ADD_France.csv`);
+console.warn(`✓ ${churches.length} églises exportées → churches_ADD_France.csv`);
