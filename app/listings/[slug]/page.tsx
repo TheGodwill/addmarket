@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
-import { eq, and, ne } from 'drizzle-orm'
+import { eq, and, ne, or } from 'drizzle-orm'
 import { db } from '@/db/client'
 import { listings, listingImages, sellerProfiles, sellerReviews } from '@/db/schema'
 import { createClient } from '@/lib/supabase/server'
@@ -20,11 +20,16 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
-async function getListing(id: string) {
+async function getListing(slugOrId: string) {
   const rows = await db
     .select()
     .from(listings)
-    .where(and(eq(listings.id, id), eq(listings.status, 'active')))
+    .where(
+      and(
+        or(eq(listings.slug, slugOrId), eq(listings.id, slugOrId)),
+        eq(listings.status, 'active'),
+      ),
+    )
     .limit(1)
   return rows.at(0) ?? null
 }
