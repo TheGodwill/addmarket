@@ -37,7 +37,7 @@ function parseCSV(raw) {
 
 const raw = readFileSync('churches_CI.csv', 'utf-8');
 const rows = parseCSV(raw);
-console.log(`Parsed ${rows.length} rows`);
+console.warn(`Parsed ${rows.length} rows`);
 
 // Fetch existing CI church IDs that are referenced (must not delete)
 const { data: refChurches } = await supabase
@@ -56,7 +56,7 @@ const protectedIds = new Set([
   ...(refProfiles ?? []).map(r => r.church_id),
   ...(refReferents ?? []).map(r => r.church_id),
 ]);
-console.log(`Protected church IDs (have references): ${protectedIds.size}`);
+console.warn(`Protected church IDs (have references): ${protectedIds.size}`);
 
 // Delete unreferenced CI churches
 const { data: existingCI } = await supabase
@@ -71,7 +71,7 @@ const toDelete = (existingCI ?? [])
 if (toDelete.length > 0) {
   const { error } = await supabase.from('churches').delete().in('id', toDelete);
   if (error) console.error('Delete error:', error.message);
-  else console.log(`Deleted ${toDelete.length} old CI churches`);
+  else console.warn(`Deleted ${toDelete.length} old CI churches`);
 }
 
 // Build insert rows
@@ -96,4 +96,4 @@ for (let i = 0; i < batch.length; i += 100) {
   process.stdout.write(`\r  Inserted ${inserted}/${batch.length}`);
 }
 
-console.log(`\n✓ ${inserted} assemblées importées`);
+console.warn(`\n✓ ${inserted} assemblées importées`);
