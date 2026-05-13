@@ -39,6 +39,7 @@ export function SignUpForm() {
               required
               className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="Jean Dupont"
+              suppressHydrationWarning
             />
           </div>
 
@@ -54,6 +55,7 @@ export function SignUpForm() {
               required
               className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="vous@exemple.fr"
+              suppressHydrationWarning
             />
           </div>
 
@@ -71,6 +73,7 @@ export function SignUpForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              suppressHydrationWarning
             />
             <PasswordStrengthMeter password={password} />
             <p className="text-xs text-gray-500">12 car. min · maj · min · chiffre · spécial</p>
@@ -87,6 +90,7 @@ export function SignUpForm() {
               autoComplete="new-password"
               required
               className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              suppressHydrationWarning
             />
           </div>
 
