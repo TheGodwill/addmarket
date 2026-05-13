@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { CookieBanner } from '@/components/legal/cookie-banner'
 import { BetaBanner } from '@/components/beta/beta-banner'
 import { FeedbackWidget } from '@/components/beta/feedback-widget'
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <CookieBanner />
         <FeedbackWidget />
+        <SpeedInsights />
       </body>
     </html>
   )
