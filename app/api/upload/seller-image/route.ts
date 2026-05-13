@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { uploadSellerImage, cloudinaryConfigured } from '@/lib/cloudinary'
+import { uploadPublicImage } from '@/lib/storage'
 
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_SIZES: Record<string, number> = { logos: 2 * 1024 * 1024, covers: 5 * 1024 * 1024 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient()
@@ -10,13 +12,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-
-  if (!cloudinaryConfigured()) {
-    return NextResponse.json(
-      { error: 'Upload Cloudinary non configuré — ajoutez CLOUDINARY_* dans .env.local' },
-      { status: 503 },
-    )
-  }
 
   const formData = await request.formData()
   const file = formData.get('file') as File | null
@@ -29,14 +24,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (folder !== 'logos' && folder !== 'covers') {
     return NextResponse.json({ error: 'Dossier invalide' }, { status: 400 })
   }
+  const maxSize = MAX_SIZES[folder] ?? 5 * 1024 * 1024
+  if (file.size > maxSize) {
+    return NextResponse.json(
+      { error: `Fichier trop volumineux — maximum ${maxSize / 1024 / 1024} Mo` },
+      { status: 400 },
+    )
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
+  // Prefer Cloudinary; fall back to Supabase Storage when not configured
+  if (cloudinaryConfigured()) {
+    try {
+      const result = await uploadSellerImage(buffer, folder, user.id)
+      return NextResponse.json(result)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur upload'
+      return NextResponse.json({ error: message }, { status: 500 })
+    }
+  }
+
   try {
-    const result = await uploadSellerImage(buffer, folder, user.id)
-    return NextResponse.json(result)
+    const ext = file.type.split('/')[1] ?? 'jpg'
+    const path = `sellers/${folder}/${user.id}_${Date.now()}.${ext}`
+    const url = await uploadPublicImage(buffer, path, file.type)
+    return NextResponse.json({ url, publicId: path, width: 0, height: 0 })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erreur upload'
-    return NextResponse.json({ error: message }, { status: 400 })
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
