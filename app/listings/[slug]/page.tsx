@@ -13,6 +13,7 @@ import { safeJsonLd } from '@/lib/safe-json-ld'
 import { ImageGallery } from './image-gallery'
 import { BuyButton } from './buy-button'
 import { QuoteForm } from './quote-form'
+import { ShareButton } from './share-button'
 
 export const revalidate = 300
 
@@ -94,6 +95,7 @@ export default async function ListingDetailPage({ params }: Props) {
     db
       .select({
         id: listings.id,
+        slug: listings.slug,
         title: listings.title,
         priceCents: listings.priceCents,
         isQuoteOnly: listings.isQuoteOnly,
@@ -272,13 +274,7 @@ export default async function ListingDetailPage({ params }: Props) {
             {/* Share */}
             <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="mb-2 text-xs font-medium text-gray-500">Partager</p>
-              <button
-                onClick={undefined}
-                className="w-full rounded-lg border border-gray-200 py-2 text-xs text-gray-600 hover:bg-gray-50"
-                aria-label="Copier le lien"
-              >
-                Copier le lien
-              </button>
+              <ShareButton url={`${baseUrl}/listings/${slug}`} />
             </div>
           </aside>
         </div>
@@ -293,7 +289,7 @@ export default async function ListingDetailPage({ params }: Props) {
               {similarRows.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/listings/${item.id}`}
+                  href={`/listings/${item.slug ?? item.id}`}
                   className="group rounded-xl border border-gray-200 bg-white p-3 transition-shadow hover:shadow-md"
                 >
                   {item.images[0] && (
