@@ -139,7 +139,7 @@ export function EditProfileForm({ seller, categories }: Props) {
           name="serviceCities"
           className={inputCls}
           defaultValue={seller.serviceCities.join(', ')}
-          placeholder="Paris, Lyon, Bordeaux"
+          placeholder="Abidjan, Cocody, Bouaké"
         />
       </div>
 

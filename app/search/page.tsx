@@ -2,9 +2,9 @@ import { Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { eq } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, lte, sql } from 'drizzle-orm'
 import { db } from '@/db/client'
-import { categories } from '@/db/schema'
+import { categories, listings, sellerProfiles } from '@/db/schema'
 import { meiliSearch, LISTINGS_INDEX, SELLERS_INDEX } from '@/lib/meilisearch'
 import type { ListingDocument, SellerDocument } from '@/lib/meilisearch'
 import { SearchBar } from './search-bar'
@@ -33,6 +33,149 @@ interface SearchParams {
   sort?: string
   page?: string
   type?: string
+}
+
+async function DbSearchResults({
+  q,
+  category,
+  priceMin,
+  priceMax,
+  sort,
+  page,
+}: {
+  q: string
+  category?: string
+  priceMin?: number
+  priceMax?: number
+  sort: string
+  page: number
+}) {
+  const offset = (page - 1) * PER_PAGE
+  const conditions = [eq(listings.status, 'active')]
+
+  if (q) conditions.push(sql`${listings.searchVector} @@ plainto_tsquery('french', ${q})`)
+  if (category) conditions.push(eq(listings.categoryId, category))
+  if (priceMin !== undefined) conditions.push(gte(listings.priceCents, priceMin))
+  if (priceMax !== undefined) conditions.push(lte(listings.priceCents, priceMax))
+
+  const orderBy =
+    sort === 'price_asc'
+      ? asc(listings.priceCents)
+      : sort === 'price_desc'
+        ? desc(listings.priceCents)
+        : sort === 'newest'
+          ? desc(listings.publishedAt)
+          : q
+            ? sql`ts_rank(${listings.searchVector}, plainto_tsquery('french', ${q})) DESC`
+            : desc(listings.publishedAt)
+
+  const [rows, countRows] = await Promise.all([
+    db
+      .select({
+        id: listings.id,
+        slug: listings.slug,
+        title: listings.title,
+        priceCents: listings.priceCents,
+        isQuoteOnly: listings.isQuoteOnly,
+        images: listings.images,
+        sellerName: sellerProfiles.businessName,
+        sellerSlug: sellerProfiles.slug,
+      })
+      .from(listings)
+      .leftJoin(sellerProfiles, eq(sellerProfiles.id, listings.sellerId))
+      .where(and(...conditions))
+      .orderBy(orderBy)
+      .limit(PER_PAGE)
+      .offset(offset),
+    db
+      .select({ n: sql<number>`count(*)::int` })
+      .from(listings)
+      .where(and(...conditions)),
+  ])
+
+  const total = Number(countRows.at(0)?.n ?? 0)
+  const totalPages = Math.ceil(total / PER_PAGE)
+
+  if (rows.length === 0) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-lg font-medium text-gray-700">Aucun résultat</p>
+        {q && (
+          <p className="mt-2 text-sm text-gray-400">
+            Essayez avec d&apos;autres mots-clés ou supprimez certains filtres.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <p className="mb-4 text-sm text-gray-500">
+        {total} offre{total > 1 ? 's' : ''}
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {rows.map((hit) => (
+          <Link
+            key={hit.id}
+            href={`/listings/${hit.slug ?? hit.id}`}
+            className="group overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-md"
+          >
+            {hit.images[0] ? (
+              <div className="relative h-36 w-full overflow-hidden bg-gray-100">
+                <Image
+                  src={hit.images[0]}
+                  alt={hit.title}
+                  fill
+                  className="object-cover transition-transform group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, 25vw"
+                />
+              </div>
+            ) : (
+              <div className="flex h-36 items-center justify-center bg-gray-100 text-3xl">📦</div>
+            )}
+            <div className="p-3">
+              <p className="line-clamp-2 text-sm font-medium text-gray-900">{hit.title}</p>
+              <p className="mt-1 text-sm font-semibold text-blue-700">
+                {hit.isQuoteOnly
+                  ? 'Sur devis'
+                  : hit.priceCents != null
+                    ? `${(hit.priceCents / 100).toFixed(2)} €`
+                    : ''}
+              </p>
+              {hit.sellerName && (
+                <p className="mt-0.5 truncate text-xs text-gray-400">{hit.sellerName}</p>
+              )}
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-4 text-sm">
+          {page > 1 && (
+            <Link
+              href={`?${new URLSearchParams({ q, ...(category ? { category } : {}), ...(priceMin != null ? { price_min: String(priceMin) } : {}), ...(priceMax != null ? { price_max: String(priceMax) } : {}), sort, page: String(page - 1) }).toString()}`}
+              className="text-blue-600 hover:underline"
+            >
+              ← Précédent
+            </Link>
+          )}
+          <span className="text-gray-500">
+            Page {page} / {totalPages}
+          </span>
+          {page < totalPages && (
+            <Link
+              href={`?${new URLSearchParams({ q, ...(category ? { category } : {}), ...(priceMin != null ? { price_min: String(priceMin) } : {}), ...(priceMax != null ? { price_max: String(priceMax) } : {}), sort, page: String(page + 1) }).toString()}`}
+              className="text-blue-600 hover:underline"
+            >
+              Suivant →
+            </Link>
+          )}
+        </div>
+      )}
+    </>
+  )
 }
 
 function ResultSkeleton() {
@@ -68,9 +211,14 @@ async function SearchResults({
 }) {
   if (!meiliSearch) {
     return (
-      <div className="py-16 text-center text-sm text-gray-400">
-        Moteur de recherche non configuré (environnement de développement).
-      </div>
+      <DbSearchResults
+        q={q}
+        {...(category ? { category } : {})}
+        {...(priceMin !== undefined ? { priceMin } : {})}
+        {...(priceMax !== undefined ? { priceMax } : {})}
+        sort={sort}
+        page={page}
+      />
     )
   }
 

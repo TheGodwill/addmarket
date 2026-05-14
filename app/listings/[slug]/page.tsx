@@ -21,13 +21,18 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 async function getListing(slugOrId: string) {
+  // When slugOrId is not a UUID, comparing it to listings.id (uuid column) causes
+  // a Postgres "invalid input syntax for type uuid" error — only add id condition for UUIDs
+  const idCondition = UUID_RE.test(slugOrId) ? eq(listings.id, slugOrId) : null
   const rows = await db
     .select()
     .from(listings)
     .where(
       and(
-        or(eq(listings.slug, slugOrId), eq(listings.id, slugOrId)),
+        idCondition ? or(eq(listings.slug, slugOrId), idCondition) : eq(listings.slug, slugOrId),
         eq(listings.status, 'active'),
       ),
     )
@@ -84,6 +89,7 @@ export default async function ListingDetailPage({ params }: Props) {
     db
       .select({
         id: sellerProfiles.id,
+        userId: sellerProfiles.userId,
         slug: sellerProfiles.slug,
         businessName: sellerProfiles.businessName,
         logoUrl: sellerProfiles.logoUrl,
@@ -198,7 +204,7 @@ export default async function ListingDetailPage({ params }: Props) {
           {/* Sidebar */}
           <aside className="space-y-4">
             {/* CTA */}
-            {user && seller && user.id !== sellerRows.at(0)?.id ? (
+            {user && seller && user.id !== seller.userId ? (
               <div className="space-y-2">
                 {listing.isQuoteOnly ? (
                   <QuoteForm listingId={listing.id} sellerProfileId={seller.id} />

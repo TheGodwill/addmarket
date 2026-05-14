@@ -259,8 +259,12 @@ export async function publishSellerProfile(
 }
 
 export async function updateSellerProfile(data: Partial<FullProfile>): Promise<ActionResult> {
-  const { user, error } = await getVerifiedUser()
-  if (error || !user) return { error: error ?? 'Non autorisé' }
+  // Profile updates do not require verified membership — only initial onboarding does.
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non autorisé' }
 
   const rl = await checkRateLimit('profileUpdate', user.id)
   if (!rl.success) return { error: 'Trop de modifications — réessayez dans une heure' }

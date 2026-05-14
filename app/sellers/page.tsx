@@ -9,7 +9,7 @@ export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Vendeurs — ADDMarket',
-  description: 'Découvrez les vendeurs vérifiés de la communauté Assemblées de Dieu France.',
+  description: "Découvrez les vendeurs vérifiés de la communauté Assemblées de Dieu Côte d'Ivoire.",
 }
 
 export default async function SellersPage({

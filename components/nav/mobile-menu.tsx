@@ -64,6 +64,14 @@ export function MobileMenu({ isLoggedIn }: Props) {
                 >
                   Mon compte
                 </Link>
+                <form action="/auth/signout" method="POST">
+                  <button
+                    type="submit"
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Déconnexion
+                  </button>
+                </form>
               </>
             ) : (
               <>

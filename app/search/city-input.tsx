@@ -69,7 +69,7 @@ export function CityInput({ defaultValue = '', onSelect, onClear }: Props) {
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         onFocus={() => suggestions.length > 0 && setOpen(true)}
-        placeholder="Ex : Lyon"
+        placeholder="Ex : Abidjan"
         className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         autoComplete="off"
       />
