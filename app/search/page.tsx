@@ -168,7 +168,7 @@ async function SearchResults({
         <div className="mt-8 flex items-center justify-center gap-4 text-sm">
           {page > 1 && (
             <Link
-              href={`?${new URLSearchParams({ q, ...(category ? { category } : {}), ...(city ? { city } : {}), sort, page: String(page - 1) }).toString()}`}
+              href={`?${new URLSearchParams({ q, ...(category ? { category } : {}), ...(city ? { city } : {}), ...(priceMin != null ? { price_min: String(priceMin) } : {}), ...(priceMax != null ? { price_max: String(priceMax) } : {}), sort, page: String(page - 1) }).toString()}`}
               className="text-blue-600 hover:underline"
             >
               ← Précédent
@@ -179,7 +179,7 @@ async function SearchResults({
           </span>
           {page < totalPages && (
             <Link
-              href={`?${new URLSearchParams({ q, ...(category ? { category } : {}), ...(city ? { city } : {}), sort, page: String(page + 1) }).toString()}`}
+              href={`?${new URLSearchParams({ q, ...(category ? { category } : {}), ...(city ? { city } : {}), ...(priceMin != null ? { price_min: String(priceMin) } : {}), ...(priceMax != null ? { price_max: String(priceMax) } : {}), sort, page: String(page + 1) }).toString()}`}
               className="text-blue-600 hover:underline"
             >
               Suivant →

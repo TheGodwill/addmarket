@@ -4,6 +4,7 @@ import { db } from '@/db/client'
 import { messages, conversations, sellerProfiles } from '@/db/schema'
 import { and, count, eq, isNull, ne, or } from 'drizzle-orm'
 import { UnreadBadge } from './unread-badge'
+import { MobileMenu } from './mobile-menu'
 
 async function getUnreadCount(userId: string): Promise<number> {
   try {
@@ -40,7 +41,8 @@ export async function SiteHeader() {
           ADDMarket
         </Link>
 
-        <nav className="flex items-center gap-1">
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-1 sm:flex">
           <Link
             href="/search"
             className="rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -93,6 +95,9 @@ export async function SiteHeader() {
             </>
           )}
         </nav>
+
+        {/* Mobile hamburger */}
+        <MobileMenu isLoggedIn={!!user} />
       </div>
     </header>
   )
