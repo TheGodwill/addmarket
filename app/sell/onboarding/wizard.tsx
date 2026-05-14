@@ -361,7 +361,7 @@ export function SellerOnboardingWizard({ categories }: WizardProps) {
                 className={inputCls}
                 value={draft.serviceCities}
                 onChange={(e) => update('serviceCities', e.target.value)}
-                placeholder="Ex : Paris, Vincennes, Saint-Mandé"
+                placeholder="Ex : Abidjan, Cocody, Yopougon"
               />
               {errors.serviceCities && <p className={errCls}>{errors.serviceCities}</p>}
             </div>
