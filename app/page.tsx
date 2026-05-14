@@ -26,7 +26,8 @@ async function getHomeData() {
       .from(categories)
       .where(eq(categories.isActive, true))
       .orderBy(categories.sortOrder)
-      .limit(8),
+      .limit(8)
+      .catch(() => [] as { id: string; name: string; slug: string; icon: string | null }[]),
     db
       .select({
         id: sellerProfiles.id,
@@ -43,9 +44,27 @@ async function getHomeData() {
         and(eq(sellerReviews.sellerId, sellerProfiles.id), eq(sellerReviews.status, 'published')),
       )
       .where(eq(sellerProfiles.isActive, true))
-      .groupBy(sellerProfiles.id)
+      .groupBy(
+        sellerProfiles.id,
+        sellerProfiles.slug,
+        sellerProfiles.businessName,
+        sellerProfiles.description,
+        sellerProfiles.logoUrl,
+      )
       .orderBy(sql`count(${sellerReviews.id}) DESC`)
-      .limit(6),
+      .limit(6)
+      .catch(
+        () =>
+          [] as {
+            id: string
+            slug: string | null
+            businessName: string
+            description: string | null
+            logoUrl: string | null
+            avgRating: number
+            reviewCount: number
+          }[],
+      ),
     db
       .select({
         id: listings.id,
@@ -61,7 +80,20 @@ async function getHomeData() {
       .leftJoin(sellerProfiles, eq(listings.sellerId, sellerProfiles.id))
       .where(eq(listings.status, 'active'))
       .orderBy(desc(listings.publishedAt))
-      .limit(8),
+      .limit(8)
+      .catch(
+        () =>
+          [] as {
+            id: string
+            title: string
+            slug: string | null
+            priceCents: number | null
+            isQuoteOnly: boolean
+            images: string[]
+            sellerName: string | null
+            sellerSlug: string | null
+          }[],
+      ),
   ])
 
   return { topCategories, featuredSellers, recentListings }

@@ -53,7 +53,15 @@ export default async function SellersPage({
           ...(catFilter ? [eq(sellerProfiles.categoryId, catFilter)] : []),
         ),
       )
-      .groupBy(sellerProfiles.id, categories.name)
+      .groupBy(
+        sellerProfiles.id,
+        sellerProfiles.slug,
+        sellerProfiles.businessName,
+        sellerProfiles.description,
+        sellerProfiles.logoUrl,
+        sellerProfiles.serviceCities,
+        categories.name,
+      )
       .orderBy(desc(sql`count(${sellerReviews.id})`))
       .limit(limit)
       .offset(offset),

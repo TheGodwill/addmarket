@@ -50,15 +50,7 @@ export default async function SellerDashboardPage({
   const nowMs = Date.now()
   const thirtyDaysAgo = new Date(nowMs - 30 * 24 * 60 * 60 * 1000)
 
-  const [
-    listingStats,
-    reviewStats,
-    profileRow,
-    totalViewsRow,
-    dailyViewRows,
-    topListings,
-    recentReviews,
-  ] = await Promise.all([
+  const [listingStats, reviewStats, profileRow, recentReviews] = await Promise.all([
     // Listing counts per status
     db
       .select({ status: listings.status, cnt: count() })
@@ -82,41 +74,6 @@ export default async function SellerDashboardPage({
       .where(eq(profiles.id, user.id))
       .limit(1),
 
-    // Total all-time views
-    db
-      .select({ total: sql<number>`count(*)::int` })
-      .from(listingViews)
-      .innerJoin(listings, eq(listings.id, listingViews.listingId))
-      .where(eq(listings.sellerId, seller.id)),
-
-    // Daily views last 30 days
-    db
-      .select({
-        day: sql<string>`date_trunc('day', ${listingViews.viewedAt})::text`,
-        views: sql<number>`count(*)::int`,
-      })
-      .from(listingViews)
-      .innerJoin(listings, eq(listings.id, listingViews.listingId))
-      .where(and(eq(listings.sellerId, seller.id), gte(listingViews.viewedAt, thirtyDaysAgo)))
-      .groupBy(sql`date_trunc('day', ${listingViews.viewedAt})`)
-      .orderBy(sql`date_trunc('day', ${listingViews.viewedAt})`),
-
-    // Top 5 listings by total views
-    db
-      .select({
-        id: listings.id,
-        title: listings.title,
-        slug: listings.slug,
-        status: listings.status,
-        views: sql<number>`count(${listingViews.id})::int`,
-      })
-      .from(listings)
-      .leftJoin(listingViews, eq(listingViews.listingId, listings.id))
-      .where(eq(listings.sellerId, seller.id))
-      .groupBy(listings.id, listings.title, listings.slug, listings.status)
-      .orderBy(sql`count(${listingViews.id}) DESC`)
-      .limit(5),
-
     // Last 3 published reviews
     db
       .select({
@@ -131,16 +88,67 @@ export default async function SellerDashboardPage({
       .limit(3),
   ])
 
+  // listing_views-dependent queries — may fail if migration 0007 not yet applied in production
+  let totalViews = 0
+  let chartData: { day: string; views: number }[] = fillDailyGaps([], 30)
+  let topListings: {
+    id: string
+    title: string
+    slug: string | null
+    status: string
+    views: number
+  }[] = []
+
+  try {
+    const [totalViewsRow, dailyViewRows, topListingsRows] = await Promise.all([
+      db
+        .select({ total: sql<number>`count(*)::int` })
+        .from(listingViews)
+        .innerJoin(listings, eq(listings.id, listingViews.listingId))
+        .where(eq(listings.sellerId, seller.id)),
+
+      db
+        .select({
+          day: sql<string>`date_trunc('day', ${listingViews.viewedAt})::text`,
+          views: sql<number>`count(*)::int`,
+        })
+        .from(listingViews)
+        .innerJoin(listings, eq(listings.id, listingViews.listingId))
+        .where(and(eq(listings.sellerId, seller.id), gte(listingViews.viewedAt, thirtyDaysAgo)))
+        .groupBy(sql`date_trunc('day', ${listingViews.viewedAt})`)
+        .orderBy(sql`date_trunc('day', ${listingViews.viewedAt})`),
+
+      db
+        .select({
+          id: listings.id,
+          title: listings.title,
+          slug: listings.slug,
+          status: listings.status,
+          views: sql<number>`count(${listingViews.id})::int`,
+        })
+        .from(listings)
+        .leftJoin(listingViews, eq(listingViews.listingId, listings.id))
+        .where(eq(listings.sellerId, seller.id))
+        .groupBy(listings.id, listings.title, listings.slug, listings.status)
+        .orderBy(sql`count(${listingViews.id}) DESC`)
+        .limit(5),
+    ])
+
+    totalViews = totalViewsRow.at(0)?.total ?? 0
+    chartData = fillDailyGaps(
+      dailyViewRows.map((r) => ({ day: r.day, views: Number(r.views) })),
+      30,
+    )
+    topListings = topListingsRows
+  } catch {
+    // listing_views table not yet available — show zeros until migration is applied
+  }
+
   const activeListings = listingStats.find((s) => s.status === 'active')?.cnt ?? 0
   const draftListings = listingStats.find((s) => s.status === 'draft')?.cnt ?? 0
   const publishedReviews = reviewStats.at(0)?.cnt ?? 0
   const avgRating = reviewStats.at(0)?.avg ?? null
   const expiresAt = profileRow.at(0)?.expiresAt
-  const totalViews = totalViewsRow.at(0)?.total ?? 0
-  const chartData = fillDailyGaps(
-    dailyViewRows.map((r) => ({ day: r.day, views: Number(r.views) })),
-    30,
-  )
   const viewsLast30 = chartData.reduce((s, d) => s + d.views, 0)
 
   const daysToExpiry = expiresAt ? Math.ceil((expiresAt.getTime() - nowMs) / 86400000) : null
